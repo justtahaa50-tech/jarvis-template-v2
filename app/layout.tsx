@@ -3,10 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
-import AnnouncementBar from "@/components/AnnouncementBar";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import CartDrawer from "@/components/CartDrawer";
+import StoreLayout from "@/components/StoreLayout";
 import ToastPortal from "@/components/ToastPortal";
 
 import Preloader from "@/components/Preloader";
@@ -39,13 +36,9 @@ export default function RootLayout({
 
         <CartProvider>
           <WishlistProvider>
-            <AnnouncementBar />
-            <Header />
-            <main id="MainContent" className="focus-none">
+            <StoreLayout>
               {children}
-            </main>
-            <Footer />
-            <CartDrawer />
+            </StoreLayout>
             <ToastPortal />
           </WishlistProvider>
         </CartProvider>

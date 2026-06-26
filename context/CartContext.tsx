@@ -21,6 +21,7 @@ interface CartContextType {
   cartCount: number;
   cartSubtotal: number;
   freeShippingThreshold: number;
+  discountThreshold: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -98,6 +99,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const cartSubtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const freeShippingThreshold = 1500; // LE 1500
+  const discountThreshold = 3000; // LE 3000 — free shipping + 5% off
 
   return (
     <CartContext.Provider value={{
@@ -109,7 +111,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateQuantity,
       cartCount,
       cartSubtotal,
-      freeShippingThreshold
+      freeShippingThreshold,
+      discountThreshold,
     }}>
       {children}
     </CartContext.Provider>

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { Product } from "@/data/dummyData";
 import { X } from "lucide-react";
+import CartProgressBar from "@/components/CartProgressBar";
 
 // Helper to create recommended products
 const createDummyProduct = (id: string, handle: string, title: string, price: number, image: string, sizes: string[]): Product => {
@@ -52,6 +53,7 @@ const CartDrawer: React.FC = () => {
     cartSubtotal,
     addToCart,
     freeShippingThreshold,
+    discountThreshold,
   } = useCart();
 
   // Carousel State
@@ -169,97 +171,75 @@ const CartDrawer: React.FC = () => {
               </div>
             ) : (
               <>
+                <CartProgressBar
+                  cartSubtotal={cartSubtotal}
+                  freeShippingThreshold={freeShippingThreshold}
+                  discountThreshold={discountThreshold}
+                />
+
                 {/* Scrollable Content (Cart Items & Recommendations Card) */}
                 <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6 custom-scrollbar bg-[#F9F8F6]">
-                  {/* Free Shipping Progress Indicator */}
-                  <div className="bg-[#0F1B2D]/5 border border-[#0F1B2D]/10 rounded-xl p-4 flex flex-col gap-2.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-sans font-medium text-neutral-800">
-                        {cartSubtotal >= freeShippingThreshold ? (
-                          <span className="text-[#C28a5c] font-bold flex items-center gap-1.5">
-                            <span>🎉</span> You qualify for <strong>FREE SHIPPING</strong>!
-                          </span>
-                        ) : (
-                          <span>
-                            You're only <strong className="font-mono text-[#C28a5c]">{formatPrice(freeShippingThreshold - cartSubtotal)}</strong> away from <strong>FREE SHIPPING</strong>!
-                          </span>
-                        )}
-                      </span>
-                      <span className="font-mono font-bold text-[#C28a5c] text-[11px]">
-                        {Math.round(Math.min((cartSubtotal / freeShippingThreshold) * 100, 100))}%
-                      </span>
-                    </div>
-                    {/* Progress Bar Container */}
-                    <div className="w-full h-1.5 bg-neutral-200 rounded-full overflow-hidden relative">
-                      <motion.div
-                        className="h-full bg-[#C28a5c] rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((cartSubtotal / freeShippingThreshold) * 100, 100)}%` }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
-                      />
-                    </div>
-                  </div>
 
                   {/* Cart Items List */}
                   <div className="flex flex-col gap-6">
                     {cartItems.map((item, idx) => (
                       <React.Fragment key={item.id}>
                         {idx > 0 && <div className="border-t border-neutral-200/40 my-1" />}
-                        <div className="flex gap-4 group item-fade-in">
+                        <div className="flex gap-3 group item-fade-in">
                           {/* Image */}
-                          <div className="w-24 h-32 bg-[#F3F2EE] shrink-0 relative overflow-hidden rounded-[4px]">
+                          <div className="w-20 h-24 bg-[#F3F2EE] shrink-0 relative overflow-hidden rounded-[4px]">
                             <Image
                               src={item.product.featuredImage}
                               alt={item.product.title}
                               fill
-                              sizes="96px"
+                              sizes="80px"
                               className="object-cover mix-blend-multiply"
                             />
                           </div>
 
                           {/* Details */}
-                          <div className="flex flex-col justify-between flex-1 py-1">
+                          <div className="flex flex-col justify-between flex-1 py-0.5">
                             <div>
                               <h3 className="font-sans text-[13.5px] font-semibold text-neutral-900 leading-tight">
                                 {item.product.title}
                               </h3>
 
                               {/* Size Badge */}
-                              <div className="mt-1.5">
-                                <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-[2px] uppercase">
+                              <div className="mt-1">
+                                <span className="bg-black text-white text-[9.5px] font-bold px-1.5 py-0.5 rounded-[2px] uppercase">
                                   {getSizeLabel(item.variantTitle)}
                                 </span>
                               </div>
 
                               {/* Price */}
-                              <div className="flex gap-2 items-baseline mt-2">
-                                <span className="text-[11px] text-neutral-400 line-through font-mono">
+                              <div className="flex gap-2 items-baseline mt-1">
+                                <span className="text-[10.5px] text-neutral-400 line-through font-mono">
                                   {formatPrice(item.price * 1.25 * item.quantity)}
                                 </span>
-                                <span className="text-[13px] font-bold text-neutral-900 font-mono">
+                                <span className="text-[12.5px] font-bold text-neutral-900 font-mono">
                                   {formatPrice(item.price * item.quantity)}
                                 </span>
-                                <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[8px] px-1.5 py-0.5 rounded-full font-bold tracking-wider">
+                                <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[7.5px] px-1 py-0.5 rounded-full font-bold tracking-wider">
                                   20% OFF
                                 </span>
                               </div>
                             </div>
 
                             {/* Quantity Selector & Remove Link */}
-                            <div className="flex items-center gap-4 mt-4">
-                              <div className="flex items-center bg-black text-white rounded-[4px] overflow-hidden h-[30px]">
+                            <div className="flex items-center gap-3 mt-2">
+                              <div className="flex items-center bg-black text-white rounded-[4px] overflow-hidden h-[25px]">
                                 <button
                                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="px-3 h-full hover:bg-neutral-800 transition-colors text-xs font-bold focus:outline-none"
+                                  className="px-2 h-full hover:bg-neutral-800 transition-colors text-[10px] font-bold focus:outline-none"
                                 >
                                   —
                                 </button>
-                                <span className="font-mono text-xs px-2 w-8 text-center text-white select-none">
+                                <span className="font-mono text-xs px-1 w-6 text-center text-white select-none">
                                   {item.quantity}
                                 </span>
                                 <button
                                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  className="px-3 h-full hover:bg-neutral-800 transition-colors text-xs font-bold focus:outline-none"
+                                  className="px-2 h-full hover:bg-neutral-800 transition-colors text-[10px] font-bold focus:outline-none"
                                 >
                                   +
                                 </button>
@@ -267,7 +247,7 @@ const CartDrawer: React.FC = () => {
 
                               <button
                                 onClick={() => removeFromCart(item.id)}
-                                className="text-[11.5px] text-neutral-500 hover:text-black underline transition-colors focus:outline-none cursor-pointer"
+                                className="text-[11px] text-neutral-500 hover:text-black underline transition-colors focus:outline-none cursor-pointer"
                               >
                                 Remove
                               </button>
@@ -282,10 +262,10 @@ const CartDrawer: React.FC = () => {
                   <div className="border-t border-[#0E2225]/20 my-2" />
 
                   {/* Complete Your Order With Carousel */}
-                  <div className="bg-[#F3F2EE]/70 border border-neutral-200/50 rounded-2xl p-5 select-none">
+                  <div className="bg-[#F3F2EE]/70 border border-neutral-200/50 rounded-2xl p-3.5 select-none">
                     {/* Header */}
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-sans text-[13.5px] font-semibold text-neutral-900">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-sans text-[13px] font-semibold text-neutral-900">
                         Complete Your Order With
                       </h4>
 
@@ -339,7 +319,7 @@ const CartDrawer: React.FC = () => {
                     </div>
 
                     {/* Product Carousel Slide Container */}
-                    <div className="relative h-[100px] overflow-hidden w-full">
+                    <div className="relative h-[80px] overflow-hidden w-full">
                       <AnimatePresence mode="popLayout" custom={direction}>
                         <motion.div
                           key={activeRecIndex}
@@ -349,15 +329,15 @@ const CartDrawer: React.FC = () => {
                           animate="center"
                           exit="exit"
                           transition={{ type: "tween", ease: [0.16, 1, 0.3, 1], duration: 0.35 }}
-                          className="flex gap-4 w-full absolute inset-0"
+                          className="flex gap-3 w-full absolute inset-0"
                         >
                           {/* Recommended Product Image */}
-                          <div className="w-[80px] h-[100px] bg-[#F3F2EE] shrink-0 relative overflow-hidden rounded-[8px]">
+                          <div className="w-[64px] h-[80px] bg-[#F3F2EE] shrink-0 relative overflow-hidden rounded-[6px]">
                             <Image
                               src={recommendedItems[activeRecIndex].product.featuredImage}
                               alt={recommendedItems[activeRecIndex].product.title}
                               fill
-                              sizes="80px"
+                              sizes="64px"
                               className="object-cover"
                             />
                           </div>
@@ -365,35 +345,35 @@ const CartDrawer: React.FC = () => {
                           {/* Recommended Product Details */}
                           <div className="flex flex-col justify-between flex-1 py-0.5">
                             <div>
-                              <h5 className="font-sans text-[13px] font-semibold text-neutral-900">
+                              <h5 className="font-sans text-[12.5px] font-semibold text-neutral-900 leading-tight">
                                 {recommendedItems[activeRecIndex].product.title}
                               </h5>
 
                               {/* Recommended Product Price */}
-                              <div className="flex gap-2 items-baseline mt-1.5">
-                                <span className="text-[11px] text-neutral-400 line-through font-mono">
+                              <div className="flex gap-2 items-baseline mt-1">
+                                <span className="text-[10.5px] text-neutral-400 line-through font-mono">
                                   {formatPrice(recommendedItems[activeRecIndex].compareAtPrice)}
                                 </span>
-                                <span className="text-[13px] font-bold text-neutral-900 font-mono">
+                                <span className="text-[12.5px] font-bold text-neutral-900 font-mono">
                                   {formatPrice(recommendedItems[activeRecIndex].product.price)}
                                 </span>
-                                <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[8px] px-1.5 py-0.5 rounded-full font-bold tracking-wider">
+                                <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[7.5px] px-1 py-0.5 rounded-full font-bold tracking-wider">
                                   20% OFF
                                 </span>
                               </div>
                             </div>
 
                             {/* Sizes & Add Button Controls */}
-                            <div className="flex items-center gap-2 mt-3">
+                            <div className="flex items-center gap-1.5 mt-2">
                               {/* Premium Styled Select Dropdown (Native pop-up avoids clipping, styled custom) */}
                               <div className="relative">
                                 <select
                                   value={selectedRecSizes[recommendedItems[activeRecIndex].product.id] || ""}
                                   onChange={(e) => handleSizeChange(recommendedItems[activeRecIndex].product.id, e.target.value)}
-                                  className="appearance-none bg-black text-white text-[11px] font-semibold rounded-[4px] pl-3 pr-7 py-1.5 focus:outline-none cursor-pointer border border-transparent hover:bg-neutral-900 transition-colors select-none font-sans"
+                                  className="appearance-none bg-black text-white text-[10.5px] font-semibold rounded-[4px] pl-2 px-6 py-1 focus:outline-none cursor-pointer border border-transparent hover:bg-neutral-900 transition-colors select-none font-sans"
                                 >
                                   {recommendedItems[activeRecIndex].product.options[0].values.map((size) => (
-                                    <option key={size} value={size} className="bg-black text-white text-[12px]">
+                                    <option key={size} value={size} className="bg-black text-white text-[11px]">
                                       {size}
                                     </option>
                                   ))}

@@ -256,13 +256,13 @@ function LoginForm({ switchToSignUp }: { switchToSignUp: () => void }) {
           </div>
           <span className="text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>Remember me</span>
         </label>
-        <button
-          type="button"
-          className="text-xs font-medium transition-colors duration-150"
+        <Link
+          href="/forgot-password"
+          className="text-xs font-medium transition-colors duration-150 hover:opacity-80"
           style={{ color: "#C28a5c" }}
         >
           Forgot password?
-        </button>
+        </Link>
       </div>
 
       {/* Sign In Button */}
