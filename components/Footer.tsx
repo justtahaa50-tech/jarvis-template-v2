@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const Footer: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -12,46 +13,36 @@ const Footer: React.FC = () => {
     setEmail("");
   };
 
-  // SVGs for the exact list of social icons
-  const iconInstagram = (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37zM17.5 6.5h.01"/>
-    </svg>
-  );
-
-  const iconTikTok = (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
-    </svg>
-  );
-
-  const iconFacebook = (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M18 2h-3a5 5 0 0 0 -5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-    </svg>
-  );
-
-  const iconYouTube = (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <rect width="20" height="15" x="2" y="4" rx="2.18" ry="2.18"/>
-      <polygon points="10 8 10 15 15 11.5 10 8"/>
-    </svg>
-  );
-
-  const iconThreads = (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-      <path d="M12 8a2.5 2.5 0 0 0-2.5 2.5v1.5a2.5 2.5 0 0 0 5 0v-1.5A2.5 2.5 0 0 0 12 8z"/>
-      <path d="M17 12v-1.5a5 5 0 0 0-10 0v1.5a5 5 0 0 0 9 3"/>
-    </svg>
-  );
-
-  const iconTwitch = (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9H9V6h2v5zm4 0h-2V6h2v5z"/>
-    </svg>
-  );
+  // Premium circular social brand icons (solid/fill icon pack)
+  const socialLinks = [
+    {
+      name: "Instagram",
+      url: "https://instagram.com",
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
+        </svg>
+      ),
+    },
+    {
+      name: "TikTok",
+      url: "https://tiktok.com",
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.86-.74-3.94-1.78-.22-.22-.43-.46-.62-.71-.02 3.4-.01 6.8-.02 10.2-.01 1.05-.28 2.1-.77 3.02-1.04 1.99-3.24 3.32-5.5 3.3-2.44.02-4.75-1.37-5.78-3.58-1.12-2.38-.61-5.32 1.25-7.18.94-.96 2.22-1.6 3.56-1.77.1-.01.2-.01.3-.02V15.3c-.63.08-1.25.32-1.75.74-.95.81-1.3 2.15-.87 3.33.36.98 1.34 1.67 2.39 1.65 1.44.02 2.65-1.14 2.66-2.58.01-4.27.01-8.54.01-12.81-.97-.04-1.93-.32-2.76-.85-.92-.58-1.63-1.49-1.98-2.52-.39-1.1-.38-2.29-.02-3.38.3-.92.89-1.74 1.63-2.34.8-.65 1.78-1.03 2.8-1.07z" />
+        </svg>
+      ),
+    },
+    {
+      name: "Facebook",
+      url: "https://facebook.com",
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+        </svg>
+      ),
+    },
+  ];
 
   return (
     <footer className="bg-[#0F1B2D] border-t border-white/10 pt-16 pb-12 w-full mt-auto text-[#F7F6F2]">
@@ -62,9 +53,16 @@ const Footer: React.FC = () => {
           
           {/* Column 1: JARVIS */}
           <div className="lg:col-span-3 flex flex-col gap-6">
-            <h3 className="font-label-caps text-label-caps text-[#F7F6F2] tracking-wider font-bold">
-              JARVIS
-            </h3>
+            <Link href="/" className="inline-block relative w-[260px] h-[80px]" aria-label="Jarvis home">
+              <Image
+                src="/assets/Jarvis Main Logo.svg"
+                alt="JARVIS Logo"
+                fill
+                className="object-contain object-left"
+                style={{ filter: "brightness(0) invert(1)" }}
+                priority
+              />
+            </Link>
             <ul className="flex flex-col gap-3 font-body-md text-body-md">
               <li>
                 <Link href="/about" className="text-[#F7F6F2]/70 hover:text-[#F7F6F2] transition-colors">
@@ -77,8 +75,8 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/products/ringer-tee" className="text-[#F7F6F2]/70 hover:text-[#F7F6F2] transition-colors">
-                  Shop Ringer Tee
+                <Link href="/products" className="text-[#F7F6F2]/70 hover:text-[#F7F6F2] transition-colors">
+                  Shop All Products
                 </Link>
               </li>
             </ul>
@@ -130,13 +128,19 @@ const Footer: React.FC = () => {
               <h3 className="font-label-caps text-label-caps text-[#F7F6F2] tracking-wider font-bold">
                 SOCIAL
               </h3>
-              <div className="flex items-center gap-3 text-[#F7F6F2]/70">
-                <a href="https://instagram.com" className="hover:text-[#F7F6F2] transition-colors" target="_blank" rel="noopener noreferrer" aria-label="Instagram">{iconInstagram}</a>
-                <a href="https://tiktok.com" className="hover:text-[#F7F6F2] transition-colors" target="_blank" rel="noopener noreferrer" aria-label="TikTok">{iconTikTok}</a>
-                <a href="https://facebook.com" className="hover:text-[#F7F6F2] transition-colors" target="_blank" rel="noopener noreferrer" aria-label="Facebook">{iconFacebook}</a>
-                <a href="https://youtube.com" className="hover:text-[#F7F6F2] transition-colors" target="_blank" rel="noopener noreferrer" aria-label="YouTube">{iconYouTube}</a>
-                <a href="https://threads.net" className="hover:text-[#F7F6F2] transition-colors" target="_blank" rel="noopener noreferrer" aria-label="Threads">{iconThreads}</a>
-                <a href="https://twitch.tv" className="hover:text-[#F7F6F2] transition-colors" target="_blank" rel="noopener noreferrer" aria-label="Twitch">{iconTwitch}</a>
+              <div className="flex items-center gap-3">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 hover:bg-[#C28a5c] text-[#F7F6F2] hover:text-white transition-all duration-300 border border-white/10 shadow-sm hover:scale-105 cursor-pointer"
+                    aria-label={link.name}
+                  >
+                    {link.icon}
+                  </a>
+                ))}
               </div>
             </div>
           </div>
@@ -160,7 +164,7 @@ const Footer: React.FC = () => {
               />
               <button
                 type="submit"
-                className="bg-[#C28a5c] text-[#F7F6F2] font-label-caps text-label-caps px-6 hover:bg-[#C28a5c]/85 transition-colors rounded-none border border-[#C28a5c] border-l-0"
+                className="bg-[#C28a5c] text-[#F7F6F2] font-label-caps text-label-caps px-6 hover:bg-[#C28a5c]/85 transition-colors rounded-none border border-[#C28a5c] border-l-0 cursor-pointer"
               >
                 SIGN UP
               </button>
@@ -185,3 +189,4 @@ const Footer: React.FC = () => {
 };
 
 export default Footer;
+

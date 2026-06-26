@@ -4,12 +4,17 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { LogoIcon } from "@/components/LogoIcon";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, Search, User, Heart, ShoppingBag, X } from "lucide-react";
 
 const Header: React.FC = () => {
   const pathname = usePathname();
   const { setIsCartOpen, cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,7 +29,7 @@ const Header: React.FC = () => {
   }, []);
 
   const navLinks = [
-    { title: "SHOP RINGER TEE", url: "/products/ringer-tee" },
+    { title: "SHOP ALL", url: "/products" },
     { title: "PRODUCT STORY", url: "/#product-story" },
     { title: "ABOUT", url: "/about" },
   ];
@@ -53,8 +58,12 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center px-margin-mobile md:px-margin-desktop w-full max-w-[1440px] mx-auto relative">
           
           {/* Mobile Menu Icon (hidden on desktop) */}
-          <button aria-label="Menu" className="md:hidden text-[#F7F6F2] p-2">
-            <span className="material-symbols-outlined">menu</span>
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Menu" 
+            className="md:hidden text-[#F7F6F2] p-2 cursor-pointer focus:outline-none flex items-center justify-center"
+          >
+            <Menu size={20} />
           </button>
 
           {/* Navigation Links (Desktop) */}
@@ -89,31 +98,125 @@ const Header: React.FC = () => {
 
           {/* Trailing Icons */}
           <div className="flex items-center gap-stack-sm md:gap-stack-md text-[#F7F6F2]">
-            <button aria-label="search" className="p-2 hover:opacity-70 transition-opacity">
-              <span className="material-symbols-outlined">search</span>
+            <button aria-label="search" className="p-2 hover:opacity-70 transition-opacity cursor-pointer flex items-center justify-center">
+              <Search size={20} />
             </button>
 
-            <button aria-label="person" className="p-2 hover:opacity-70 transition-opacity hidden md:block">
-              <span className="material-symbols-outlined">person</span>
+            <button aria-label="person" className="p-2 hover:opacity-70 transition-opacity hidden md:flex items-center justify-center cursor-pointer">
+              <User size={20} />
             </button>
 
-            <button aria-label="favorite" className="p-2 hover:opacity-70 transition-opacity hidden md:block">
-              <span className="material-symbols-outlined">favorite</span>
-            </button>
+            <Link
+              href="/wishlist"
+              aria-label="wishlist"
+              className="p-2 hover:opacity-70 transition-opacity hidden md:flex items-center justify-center cursor-pointer relative"
+            >
+              <Heart size={20} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 bg-[#C28a5c] text-[#F7F6F2] text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             <button
               onClick={() => setIsCartOpen(true)}
               aria-label="shopping_bag"
-              className="p-2 hover:opacity-70 transition-opacity relative"
+              className="p-2 hover:opacity-70 transition-opacity relative cursor-pointer focus:outline-none flex items-center justify-center"
             >
-              <span className="material-symbols-outlined">shopping_bag</span>
+              <ShoppingBag size={20} />
               {cartCount > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#C28a5c] rounded-full"></span>
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 bg-[#C28a5c] text-[#F7F6F2] text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                  {cartCount}
+                </span>
               )}
             </button>
           </div>
         </div>
       </nav>
+
+      {/* Mobile Menu Drawer */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black z-50 md:hidden"
+            />
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 380, damping: 38 }}
+              className="fixed top-0 left-0 bottom-0 w-4/5 max-w-[300px] bg-[#0F1B2D] text-[#F7F6F2] z-50 p-6 flex flex-col gap-8 md:hidden shadow-2xl"
+            >
+              {/* Close Button & Brand */}
+              <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                  <span className="font-label-caps text-label-caps tracking-widest font-bold text-white">JARVIS</span>
+                </Link>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-white/70 hover:text-white p-1 cursor-pointer focus:outline-none flex items-center justify-center"
+                  aria-label="Close menu"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Links */}
+              <ul className="flex flex-col gap-6 font-label-caps text-sm tracking-wider">
+                {navLinks.map((link) => {
+                  const isActive = pathname === link.url;
+                  return (
+                    <li key={link.url}>
+                      <Link
+                        href={link.url}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block py-1 ${isActive ? "text-white font-bold" : "text-[#F7F6F2]/75"}`}
+                      >
+                        {link.title}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {/* Quick Actions */}
+              <div className="border-t border-white/10 pt-6 flex flex-col gap-4">
+                <Link
+                  href="/about"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 text-[#F7F6F2]/75 hover:text-white"
+                >
+                  <User size={18} />
+                  <span className="font-label-caps text-xs">Profile</span>
+                </Link>
+                <Link
+                  href="/wishlist"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 text-[#F7F6F2]/75 hover:text-white"
+                >
+                  <div className="relative">
+                    <Heart size={18} />
+                    {wishlistCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-3.5 h-3.5 bg-[#C28a5c] text-[#F7F6F2] text-[8px] font-bold rounded-full flex items-center justify-center px-0.5">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-label-caps text-xs">Wishlist</span>
+                </Link>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 };

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { Product } from "@/data/dummyData";
+import { X } from "lucide-react";
 
 // Helper to create recommended products
 const createDummyProduct = (id: string, handle: string, title: string, price: number, image: string, sizes: string[]): Product => {
@@ -50,6 +51,7 @@ const CartDrawer: React.FC = () => {
     updateQuantity,
     cartSubtotal,
     addToCart,
+    freeShippingThreshold,
   } = useCart();
 
   // Carousel State
@@ -135,15 +137,20 @@ const CartDrawer: React.FC = () => {
           >
             {/* Header */}
             <div className="px-6 py-5 border-b border-neutral-200/60 flex justify-between items-center bg-[#F9F8F6]">
-              <h2 className="font-sans text-lg font-medium text-neutral-800 tracking-normal capitalize">
+              <h2 className="font-sans text-lg font-medium text-neutral-800 tracking-normal capitalize flex items-center gap-2.5">
                 Shopping cart
+                {cartCount > 0 && (
+                  <span className="bg-[#C28a5c]/10 text-[#C28a5c] text-[11px] font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1.5 font-mono">
+                    {cartCount}
+                  </span>
+                )}
               </h2>
               <button
                 onClick={() => setIsCartOpen(false)}
                 className="text-neutral-500 hover:text-black transition-colors p-1"
                 aria-label="Close cart"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <X size={20} />
               </button>
             </div>
 
@@ -164,6 +171,35 @@ const CartDrawer: React.FC = () => {
               <>
                 {/* Scrollable Content (Cart Items & Recommendations Card) */}
                 <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6 custom-scrollbar bg-[#F9F8F6]">
+                  {/* Free Shipping Progress Indicator */}
+                  <div className="bg-[#0F1B2D]/5 border border-[#0F1B2D]/10 rounded-xl p-4 flex flex-col gap-2.5">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-sans font-medium text-neutral-800">
+                        {cartSubtotal >= freeShippingThreshold ? (
+                          <span className="text-[#C28a5c] font-bold flex items-center gap-1.5">
+                            <span>🎉</span> You qualify for <strong>FREE SHIPPING</strong>!
+                          </span>
+                        ) : (
+                          <span>
+                            You're only <strong className="font-mono text-[#C28a5c]">{formatPrice(freeShippingThreshold - cartSubtotal)}</strong> away from <strong>FREE SHIPPING</strong>!
+                          </span>
+                        )}
+                      </span>
+                      <span className="font-mono font-bold text-[#C28a5c] text-[11px]">
+                        {Math.round(Math.min((cartSubtotal / freeShippingThreshold) * 100, 100))}%
+                      </span>
+                    </div>
+                    {/* Progress Bar Container */}
+                    <div className="w-full h-1.5 bg-neutral-200 rounded-full overflow-hidden relative">
+                      <motion.div
+                        className="h-full bg-[#C28a5c] rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((cartSubtotal / freeShippingThreshold) * 100, 100)}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+
                   {/* Cart Items List */}
                   <div className="flex flex-col gap-6">
                     {cartItems.map((item, idx) => (
@@ -202,6 +238,9 @@ const CartDrawer: React.FC = () => {
                                 </span>
                                 <span className="text-[13px] font-bold text-neutral-900 font-mono">
                                   {formatPrice(item.price * item.quantity)}
+                                </span>
+                                <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[8px] px-1.5 py-0.5 rounded-full font-bold tracking-wider">
+                                  20% OFF
                                 </span>
                               </div>
                             </div>
@@ -337,6 +376,9 @@ const CartDrawer: React.FC = () => {
                                 </span>
                                 <span className="text-[13px] font-bold text-neutral-900 font-mono">
                                   {formatPrice(recommendedItems[activeRecIndex].product.price)}
+                                </span>
+                                <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[8px] px-1.5 py-0.5 rounded-full font-bold tracking-wider">
+                                  20% OFF
                                 </span>
                               </div>
                             </div>

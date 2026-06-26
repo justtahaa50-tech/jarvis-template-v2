@@ -87,7 +87,7 @@ export const ringerTeeProduct: Product = {
     { id: "var_owhite_xl", title: "Olive / White / XL", price: 700, available: true, options: { "Color": "Olive / White", "Size": "XL" }, image: "/assets/OLIVE-WHITE/gogo-front_1.jpg" },
     // Rose / White variants
     { id: "var_rose_s", title: "Rose / White / S", price: 700, available: false, options: { "Color": "Rose / White", "Size": "S" }, image: "/assets/ROSE/nour-1.jpg" },
-    { id: "var_rose_m", title: "Rose / White / M", price: 700, available: true, options: { "Color": "Rose / White", "Size": "M" }, image: "/assets/ROSE/nour-1.jpg" },
+    { id: "var_rose_m", title: "Rose / White / M", price: 700, available: false, options: { "Color": "Rose / White", "Size": "M" }, image: "/assets/ROSE/nour-1.jpg" },
     { id: "var_rose_l", title: "Rose / White / L", price: 700, available: false, options: { "Color": "Rose / White", "Size": "L" }, image: "/assets/ROSE/nour-1.jpg" },
     { id: "var_rose_xl", title: "Rose / White / XL", price: 700, available: false, options: { "Color": "Rose / White", "Size": "XL" }, image: "/assets/ROSE/nour-1.jpg" },
     // Army / White variants

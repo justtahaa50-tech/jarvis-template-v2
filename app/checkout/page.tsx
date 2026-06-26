@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
+import { Lock, Truck, ArrowLeftRight, AlertTriangle, CheckCircle2, Banknote, CreditCard } from "lucide-react";
 
 const TRUST_ITEMS = [
   "Premium Cotton Fabric",
@@ -68,7 +69,7 @@ export default function CheckoutPage() {
             JARVIS
           </Link>
           <div className="flex items-center gap-2 font-label-caps text-label-caps text-on-surface-variant text-[11px]">
-            <span className="material-symbols-outlined text-[16px] text-success">lock</span>
+            <Lock className="text-success" size={16} />
             SECURE CHECKOUT
           </div>
         </div>
@@ -132,7 +133,7 @@ export default function CheckoutPage() {
                     border: "1px solid rgba(78,122,99,0.18)",
                   }}
                 >
-                  <span className="material-symbols-outlined text-success text-[20px] mt-0.5">local_shipping</span>
+                  <Truck className="text-success mt-0.5" size={20} />
                   <div>
                     <p className="font-label-caps text-label-caps text-success text-[11px] tracking-widest mb-1">ORDER TODAY — SHIPS WITHIN 24 HOURS</p>
                     <p className="font-body-md text-body-md text-on-surface-variant text-sm">
@@ -217,7 +218,7 @@ export default function CheckoutPage() {
                     boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
                   }}
                 >
-                  <span className="material-symbols-outlined text-tertiary text-[20px] mt-0.5">swap_horiz</span>
+                  <ArrowLeftRight className="text-tertiary mt-0.5" size={20} />
                   <div>
                     <p className="font-label-caps text-label-caps text-primary text-[11px] tracking-widest mb-1">NOT SURE ABOUT SIZING?</p>
                     <p className="font-body-md text-body-md text-on-surface-variant text-sm">
@@ -240,7 +241,7 @@ export default function CheckoutPage() {
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">lock</span>
+                    <Lock size={18} />
                     Place Order — LE {total.toLocaleString()}
                   </span>
                 )}
@@ -304,7 +305,7 @@ export default function CheckoutPage() {
                   className="flex items-center gap-2 px-4 py-3 rounded-xl"
                   style={{ background: "rgba(176,122,79,0.10)", border: "1px solid rgba(176,122,79,0.20)" }}
                 >
-                  <span className="material-symbols-outlined text-tertiary text-[16px]">warning</span>
+                  <AlertTriangle className="text-tertiary" size={16} />
                   <p className="font-label-caps text-label-caps text-tertiary text-[10px] tracking-widest">
                     ONLY A FEW PIECES REMAIN IN POPULAR SIZES
                   </p>
@@ -338,7 +339,7 @@ export default function CheckoutPage() {
               <div className="flex flex-col gap-2.5">
                 {TRUST_ITEMS.map((item) => (
                   <div key={item} className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                    <CheckCircle2 className="text-success" size={18} />
                     <span className="font-body-md text-body-md text-on-surface-variant text-sm">{item}</span>
                   </div>
                 ))}
@@ -429,7 +430,11 @@ function PaymentOption({
       {image ? (
         <img src={image} alt={label} className="h-6 w-auto object-contain flex-shrink-0" />
       ) : (
-        <span className="material-symbols-outlined text-primary text-[22px]">{icon}</span>
+        icon === "payments" ? (
+          <Banknote className="text-primary" size={22} />
+        ) : icon === "credit_card" ? (
+          <CreditCard className="text-primary" size={22} />
+        ) : null
       )}
       <div className="flex flex-col gap-0.5 flex-1">
         <span className="font-body-md text-body-md text-primary text-sm font-medium">{label}</span>

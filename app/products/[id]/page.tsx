@@ -3,10 +3,13 @@
 import React, { use, useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { dummyProducts } from "@/data/dummyData";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import Accordion from "@/components/Accordion";
+import { Truck, Minus, Plus, ShoppingBag, Shield, RotateCw, Ruler, X, Heart, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ── Sliding roll-up text animation (Lando-store style) ──
 const AnimatedLabel = ({ text, className }: { text: string; className?: string }) => (
@@ -56,6 +59,7 @@ const RECOMMENDED_VARIANTS = [
 export default function ProductDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const { addToCart, setIsCartOpen } = useCart();
+  const router = useRouter();
 
   // Find product by handle, fallback to first product (Gray Camo Jersey) if not found
   let product = dummyProducts.find((p) => p.handle === id);
@@ -85,6 +89,55 @@ export default function ProductDetailPage({ params }: PageProps) {
   const [selectedSize, setSelectedSize] = useState(getFirstAvailableSize(colorOption?.values[0] || ""));
   const [quantity, setQuantity] = useState(1);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+  const { toggleWishlist, isInWishlist } = useWishlist();
+
+  // Lightbox Modal state
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
+
+  // Thumbnails scroll
+  const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
+  const scrollThumbnailsDown = () => {
+    if (thumbnailsContainerRef.current) {
+      thumbnailsContainerRef.current.scrollBy({ top: 130, behavior: "smooth" });
+    }
+  };
+
+  const currentVariant = product.variants.find(
+    (v) => v.options["Color"] === selectedColor && v.options["Size"] === selectedSize
+  );
+
+  const activeVariantId = currentVariant?.id || product.variants[0]?.id || product.id;
+  const isFavorite = isInWishlist(product.id, activeVariantId);
+
+  const getVariantStockCount = (variantId?: string) => {
+    if (!variantId) return 0;
+    if (variantId.endsWith("_s") || variantId.endsWith("_xl")) return 3;
+    if (variantId.endsWith("_l")) return 4;
+    return 15;
+  };
+
+  // Helper to determine color variant stock status and first available variant for recommended variants
+  const getColorVariantInfo = (slug: string) => {
+    const colorMap: { [key: string]: string } = {
+      "black-white": "Black / White",
+      "creamy-olive": "Creamy / Olive",
+      "creamy-burgundy": "Creamy / Burgundy",
+      "olive-white": "Olive / White",
+      "rose-white": "Rose / White",
+      "army-white": "Army / White",
+      "burgundy-white": "Burgundy / White",
+    };
+    const colorName = colorMap[slug];
+    const colorVariants = product.variants.filter(
+      (v) => v.options.Color === colorName
+    );
+    const firstAvailable = colorVariants.find((v) => v.available);
+    const inStock = colorVariants.some((v) => v.available);
+    const variantId = firstAvailable ? firstAvailable.id : (colorVariants[0]?.id || "");
+    const stockCount = firstAvailable ? getVariantStockCount(variantId) : 0;
+    return { inStock, variantId, stockCount };
+  };
 
   // ── Sticky ATC bar ──
   const [stickyBarVisible, setStickyBarVisible] = useState(false);
@@ -242,10 +295,10 @@ export default function ProductDetailPage({ params }: PageProps) {
     }
   }, []);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (openCart = true) => {
     if (!product) return;
     const variantId = activeVariant?.id || product.id;
-    addToCart(product, variantId, quantity);
+    addToCart(product, variantId, quantity, openCart);
   };
 
   const getColorFolder = (colorName: string) => {
@@ -267,112 +320,129 @@ export default function ProductDetailPage({ params }: PageProps) {
 
   return (
     <div className="w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-6 md:py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-gutter">
+      <style>{`
+        @keyframes periodic-glow-pulse {
+          0%, 75%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 12px rgba(15, 27, 45, 0.05);
+            filter: brightness(1);
+          }
+          87.5% {
+            transform: scale(1.025);
+            box-shadow: 0 12px 28px var(--atc-glow-color, rgba(194, 138, 92, 0.45)), 0 0 0 4px var(--atc-glow-ring, rgba(194, 138, 92, 0.15));
+            filter: brightness(1.1);
+          }
+        }
+        .animate-atc-glow {
+          animation: periodic-glow-pulse 3s ease-in-out infinite;
+          transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, filter 0.3s ease;
+        }
+        .animate-atc-glow:hover {
+          filter: brightness(1.1);
+        }
+      `}</style>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-gutter">
         
-        {/* Product Gallery (Left) */}
-        <div className="lg:col-span-7 flex flex-col md:flex-row gap-4 h-[614px] lg:h-[870px] lg:sticky lg:top-[120px]">
-          {/* Desktop Vertical Photo Indexing (Next to thumbnails on the left) */}
-          {productImages.length > 1 && (
-            <div className="hidden md:flex flex-col gap-4 items-center justify-center py-5 px-3 rounded-full select-none h-fit my-auto"
-              style={{
-                backdropFilter: "blur(20px)",
-                background: "rgba(15, 27, 45, 0.45)",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)"
-              }}
+        {/* Product Gallery (Left) - exactly 50% width on desktop */}
+        <div className="lg:col-span-6 flex flex-col md:flex-row gap-4 h-auto lg:h-[720px] lg:sticky lg:top-[120px]">
+          {/* Desktop Thumbnails Column - Styled like the screenshot */}
+          <div className="hidden md:flex flex-col gap-4 items-center flex-shrink-0 w-24 h-full pb-4">
+            <div
+              ref={thumbnailsContainerRef}
+              className="flex flex-col gap-4 overflow-y-auto hide-scrollbar scroll-smooth w-full flex-1"
+              style={{ maxHeight: "calc(100% - 60px)" }}
             >
-              {productImages.map((_, idx) => {
+              {productImages.map((img, idx) => {
                 const isActive = activeImageIndex === idx;
-                const numStr = (idx + 1).toString().padStart(2, '0');
                 return (
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`font-mono transition-all duration-300 ${
-                      isActive
-                        ? "text-[#F7F6F2] text-sm font-bold scale-110"
-                        : "text-[#F7F6F2]/50 text-[10px] hover:text-[#F7F6F2]"
-                    }`}
+                    className="w-full aspect-[3/4] relative overflow-hidden transition-all duration-300 rounded-[16px] border-2 bg-surface-container-low"
+                    style={{
+                      borderColor: isActive ? "#0F1B2D" : "rgba(15, 27, 45, 0.08)",
+                      opacity: isActive ? 1 : 0.8,
+                    }}
                   >
-                    {numStr}
+                    <Image
+                      src={img}
+                      alt={`${product.title} thumbnail ${idx + 1}`}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
                   </button>
                 );
               })}
             </div>
-          )}
-
-          {/* Desktop Thumbnails */}
-          <div className="hidden md:flex flex-col gap-4 overflow-y-auto hide-scrollbar w-24 flex-shrink-0">
-            {productImages.map((img, idx) => (
+            {productImages.length > 4 && (
               <button
-                key={idx}
-                onClick={() => setActiveImageIndex(idx)}
-                className={`w-full aspect-[3/4] relative overflow-hidden transition-all duration-300 rounded-2xl border ${
-                  activeImageIndex === idx ? "opacity-100" : "border-white/20 opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm"
-                }`}
-                style={
-                  activeImageIndex === idx
-                    ? {
-                        borderColor: buttonColor,
-                        backgroundColor: `${buttonColor}12`,
-                        boxShadow: `0 4px 12px ${buttonColor}40`
-                      }
-                    : {}
-                }
+                onClick={scrollThumbnailsDown}
+                className="w-10 h-10 rounded-full border border-outline-variant/15 flex items-center justify-center bg-white text-[#0F1B2D] hover:bg-[#F7F6F2] transition-all shadow-sm cursor-pointer mt-2"
+                aria-label="Scroll thumbnails down"
               >
-                <Image
-                  src={img}
-                  alt={`${product.title} thumbnail ${idx + 1}`}
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-4 h-4 fill-none stroke-current"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
               </button>
-            ))}
+            )}
           </div>
 
-          {/* Main Large Image */}
-          <div className="w-full h-full bg-surface-container relative overflow-hidden flex-1 rounded-[24px] border border-outline-variant/10 shadow-sm">
-            {productImages[activeImageIndex] ? (
-              <Image
-                src={productImages[activeImageIndex]}
-                alt={product.title}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 55vw"
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center font-label-caps text-xs">
-                No Image
-              </div>
-            )}
-            
-            {/* Mobile Vertical Photo Indexing Overlay */}
-            {productImages.length > 1 && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-20 items-center justify-center py-4 px-3 rounded-full select-none md:hidden"
-                style={{
-                  backdropFilter: "blur(20px)",
-                  background: "rgba(15, 27, 45, 0.45)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)"
+          {/* Main Large Image Wrapper */}
+          <div className="flex-1 flex flex-col gap-3 h-full relative">
+            <div className="w-full aspect-[3/4] md:aspect-auto md:h-full bg-surface-container relative overflow-hidden flex-1 rounded-[24px] border border-outline-variant/10 shadow-sm group">
+              {productImages[activeImageIndex] ? (
+                <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
+                  <Image
+                    src={productImages[activeImageIndex]}
+                    alt={product.title}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center font-label-caps text-xs">
+                  No Image
+                </div>
+              )}
+
+              {/* Magnification button */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsLightboxOpen(true);
                 }}
+                className="absolute bottom-4 right-4 z-10 w-11 h-11 rounded-full bg-white text-[#0F1B2D] flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer border border-outline-variant/10"
+                title="Zoom image"
               >
+                <ZoomIn size={18} />
+              </button>
+            </div>
+
+            {/* Mobile Horizontal Photo Indexing Dots */}
+            {productImages.length > 1 && (
+              <div className="flex md:hidden justify-center items-center gap-1.5 mt-1 select-none">
                 {productImages.map((_, idx) => {
                   const isActive = activeImageIndex === idx;
-                  const numStr = (idx + 1).toString().padStart(2, '0');
                   return (
                     <button
                       key={idx}
                       onClick={() => setActiveImageIndex(idx)}
-                      className={`font-mono transition-all duration-300 ${
-                        isActive
-                          ? "text-[#F7F6F2] text-sm font-bold scale-110"
-                          : "text-[#F7F6F2]/50 text-[10px] hover:text-[#F7F6F2]"
+                      className={`h-1.5 rounded-full transition-all duration-300 focus:outline-none ${
+                        isActive ? "bg-[#0F1B2D] w-4.5" : "bg-neutral-300 w-1.5"
                       }`}
-                    >
-                      {numStr}
-                    </button>
+                      aria-label={`Go to image ${idx + 1}`}
+                    />
                   );
                 })}
               </div>
@@ -380,8 +450,8 @@ export default function ProductDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Product Info & Cart Form (Right) */}
-        <div className="lg:col-span-5 px-margin-mobile lg:px-margin-desktop lg:pr-margin-desktop lg:pl-0 pt-8 lg:pt-0 flex flex-col gap-stack-lg">
+        {/* Product Info & Cart Form (Right) - exactly 50% width on desktop */}
+        <div className="lg:col-span-6 px-margin-mobile lg:px-margin-desktop lg:pr-margin-desktop lg:pl-0 pt-8 lg:pt-0 flex flex-col gap-stack-lg">
           
           {/* Header Block */}
           <div className="flex flex-col gap-stack-sm">
@@ -394,10 +464,70 @@ export default function ProductDetailPage({ params }: PageProps) {
             <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary uppercase mt-4">
               {product.title}
             </h1>
-            <div className="font-display-md text-display-md text-primary mt-2">
-              LE {product.price}
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              <span className="font-display-md text-display-md text-[#0F1B2D]">
+                LE {product.price.toFixed(2)}
+              </span>
+              <span className="font-body-md text-body-md text-on-surface-variant/40 line-through">
+                LE {(product.price / 0.8).toFixed(2)}
+              </span>
+              <span
+                className="font-label-caps text-[10px] px-2.5 py-1 rounded-full font-bold tracking-widest"
+                style={{
+                  background: "rgba(194, 138, 92, 0.12)",
+                  color: "#C28a5c",
+                }}
+              >
+                20% OFF
+              </span>
             </div>
-            <div className="flex items-center gap-2 mt-2">
+
+            {currentVariant && !currentVariant.available && (
+              <div className="flex flex-col gap-2 mt-3.5 animate-fade-in w-full max-w-[320px]">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#0F1B2D]/35 bg-[#0F1B2D]/10">
+                    <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#0F1B2D] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#0F1B2D]"></span>
+                  </span>
+                  <span className="font-label-caps text-[11px] text-[#0F1B2D] font-bold tracking-widest uppercase">
+                    Sold Out <span className="text-[#0F1B2D]/60 font-medium">— Restocking Soon</span>
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {currentVariant && currentVariant.available && getVariantStockCount(currentVariant.id) <= 5 && (
+              <div className="flex flex-col gap-2 mt-3.5 animate-fade-in w-full max-w-[320px]">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#C28a5c]/35 bg-[#C28a5c]/10">
+                    <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#C28a5c] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#C28a5c]"></span>
+                  </span>
+                  <span className="font-label-caps text-[11px] text-[#0F1B2D] font-bold tracking-widest uppercase">
+                    Low stock <span className="text-[#C28a5c] font-medium">— only {getVariantStockCount(currentVariant.id)} left</span>
+                  </span>
+                </div>
+                {/* Custom shaped segmented progress bar using brand colors */}
+                <div className="flex gap-1.5 w-full mt-1.5">
+                  {Array.from({ length: 5 }).map((_, idx) => {
+                    const stock = getVariantStockCount(currentVariant.id);
+                    const isActive = idx < stock;
+                    return (
+                      <div
+                        key={idx}
+                        className="h-2 flex-1 transform skew-x-[-12deg] rounded-[2px] transition-all duration-500 ease-out"
+                        style={{
+                          backgroundColor: isActive ? "#C28a5c" : "rgba(15, 27, 45, 0.08)",
+                          boxShadow: isActive ? "0 1.5px 4px rgba(194, 138, 92, 0.25)" : "none",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 mt-3">
               <span className="font-label-caps text-label-caps text-primary border border-primary px-2 py-1">
                 BEST SELLER
               </span>
@@ -410,7 +540,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           {/* Shipping Estimate Card */}
           <div className="flex flex-col gap-2 p-4 bg-surface-container-low border border-outline-variant/10">
             <div className="flex items-center gap-2" style={{ color: buttonColor }}>
-              <span className="material-symbols-outlined">local_shipping</span>
+              <Truck size={18} />
               <span className="font-body-md text-body-md font-bold">
                 {product.deliveryEstimate || "Estimated delivery : Jun 27 - Jun 29"}
               </span>
@@ -528,48 +658,106 @@ export default function ProductDetailPage({ params }: PageProps) {
             )}
 
             {/* ATC / Quantity Panel */}
-            <div className="flex flex-col gap-4 pt-2">
-              <div className="flex gap-4">
-                {/* Quantity */}
-                <div className="flex items-center border border-outline-variant/30 h-14 w-1/3 bg-surface-container-lowest">
+            <div className="flex flex-col gap-4 pt-4">
+              {/* Quantity Selector */}
+              <div className="flex flex-col gap-1.5">
+                <span className="font-label-caps text-label-caps text-on-surface-variant text-[10px] tracking-widest uppercase">Quantity</span>
+                <div className="flex items-center border border-outline-variant/20 h-12 w-[140px] bg-surface-container-low rounded-xl overflow-hidden">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-12 h-full flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"
+                    className="w-11 h-full flex items-center justify-center transition-all duration-300 focus:outline-none cursor-pointer"
+                    style={{ color: "rgba(15, 27, 45, 0.6)" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = buttonColor;
+                      e.currentTarget.style.color = "#FFFFFF";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "rgba(15, 27, 45, 0.6)";
+                    }}
                   >
-                    <span className="material-symbols-outlined">remove</span>
+                    <Minus size={14} />
                   </button>
-                  <span className="w-full text-center font-label-caps text-label-caps">
+                  <span className="flex-1 text-center font-body-md text-body-md font-semibold select-none text-primary">
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-12 h-full flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"
+                    className="w-11 h-full flex items-center justify-center transition-all duration-300 focus:outline-none cursor-pointer"
+                    style={{ color: "rgba(15, 27, 45, 0.6)" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = buttonColor;
+                      e.currentTarget.style.color = "#FFFFFF";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "rgba(15, 27, 45, 0.6)";
+                    }}
                   >
-                    <span className="material-symbols-outlined">add</span>
+                    <Plus size={14} />
                   </button>
                 </div>
-                {/* Add To Cart */}
+              </div>
+
+              {/* Add to Cart & Favorite Button Row */}
+              <div className="flex gap-3 items-center">
                 <motion.button
                   ref={atcButtonRef}
-                  onClick={handleAddToCart}
+                  onClick={() => handleAddToCart()}
                   whileHover="hover"
                   initial="initial"
-                  style={{ borderColor: buttonColor, color: buttonColor }}
-                  className="flex-1 h-14 bg-surface-container-lowest border font-label-caps text-label-caps uppercase flex items-center justify-center gap-2 hover:bg-surface-container-low transition-all duration-300 cursor-pointer"
+                  className="animate-atc-glow flex-1 h-14 text-white font-label-caps text-label-caps uppercase flex items-center justify-center gap-2 rounded-xl cursor-pointer focus:outline-none border border-transparent"
+                  style={{
+                    backgroundColor: buttonColor,
+                    // @ts-ignore
+                    "--atc-glow-color": `${buttonColor}73`,
+                    // @ts-ignore
+                    "--atc-glow-ring": `${buttonColor}26`,
+                  }}
                 >
-                  <span className="material-symbols-outlined">shopping_bag</span>
-                  <AnimatedLabel text="Add to Cart" />
+                  <ShoppingBag size={18} />
+                  <AnimatedLabel text={`Add to cart — LE ${(product.price * quantity).toLocaleString()}`} />
                 </motion.button>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const activeImage = currentVariant?.image || productImages[0] || product.featuredImage;
+                    toggleWishlist(product, activeVariantId, selectedColor, activeImage);
+                  }}
+                  className="w-14 h-14 border border-outline-variant/30 rounded-xl flex items-center justify-center bg-surface-container-lowest text-primary hover:text-[#ba1a1a] hover:border-[#ba1a1a]/50 transition-all duration-300 cursor-pointer focus:outline-none"
+                  aria-label="Add to wishlist"
+                >
+                  <Heart
+                    size={20}
+                    fill={isFavorite ? "#ba1a1a" : "none"}
+                    color={isFavorite ? "#ba1a1a" : "currentColor"}
+                    className="transition-colors duration-300"
+                  />
+                </button>
               </div>
               
-              {/* Buy Now */}
+              {/* Buy Now - Redirects directly to checkout */}
               <button
                 onClick={() => {
-                  handleAddToCart();
-                  setIsCartOpen(true);
+                  handleAddToCart(false);
+                  router.push("/checkout");
                 }}
-                style={{ backgroundColor: buttonColor }}
-                className="w-full h-14 text-white font-label-caps text-label-caps uppercase hover:opacity-90 transition-all duration-300"
+                className="w-full h-14 font-label-caps text-label-caps uppercase transition-all duration-300 rounded-xl cursor-pointer focus:outline-none border-2"
+                style={{
+                  borderColor: buttonColor,
+                  color: buttonColor,
+                  backgroundColor: "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = buttonColor;
+                  e.currentTarget.style.color = "#FFFFFF";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = buttonColor;
+                }}
               >
                 Buy it now
               </button>
@@ -578,24 +766,24 @@ export default function ProductDetailPage({ params }: PageProps) {
           </div>
 
           {/* Trust Strip */}
-          <div className="flex justify-center gap-6 py-4 border-y border-outline-variant/20 mt-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 py-4 border-y border-outline-variant/20 mt-4">
             <div className="flex items-center gap-2 text-on-surface-variant">
-              <span className="material-symbols-outlined text-lg">local_shipping</span>
+              <Truck size={18} />
               <span className="font-label-caps text-label-caps text-[10px]">On-time delivery</span>
             </div>
             <div className="flex items-center gap-2 text-on-surface-variant">
-              <span className="material-symbols-outlined text-lg">shield</span>
+              <Shield size={18} />
               <span className="font-label-caps text-label-caps text-[10px]">Secure checkout</span>
             </div>
             <div className="flex items-center gap-2 text-on-surface-variant">
-              <span className="material-symbols-outlined text-lg">sync</span>
+              <RotateCw size={18} />
               <span className="font-label-caps text-label-caps text-[10px]">Easy exchange</span>
             </div>
           </div>
 
           {/* Collapsible Accordions */}
           <div className="flex flex-col border-b border-outline-variant/20">
-            <Accordion title="Details" iconName="checkroom" defaultOpen={true} iconColor={buttonColor}>
+            <Accordion title="Details" iconName="checkroom" defaultOpen={false} iconColor={buttonColor}>
               <p>{product.description}</p>
               <ul className="list-disc pl-5 mt-2 space-y-1 font-label-sm text-label-sm">
                 <li>100% Premium Egyptian Cotton</li>
@@ -684,95 +872,156 @@ export default function ProductDetailPage({ params }: PageProps) {
 
         {/* Inner row */}
         <div
-          className="relative w-full max-w-[900px] mx-auto px-margin-mobile md:px-8 flex items-center justify-center gap-5 py-4"
-          style={{ zIndex: 2, minHeight: 72 }}
+          className="relative w-full max-w-[900px] mx-auto px-4 md:px-8 py-3 md:py-4"
+          style={{ zIndex: 2, minHeight: 64 }}
         >
-          {/* Thumbnail + title */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div
-              className="w-14 h-14 rounded-full overflow-hidden relative flex-shrink-0"
-              style={{ border: `2px solid ${buttonColor}40`, boxShadow: `0 0 0 3px ${buttonColor}18` }}
+          {/* Mobile Layout: Responsive, simple, no horizontal overflow */}
+          <div className="flex md:hidden items-center justify-between gap-3 w-full">
+            {/* Size Button */}
+            <button
+              onClick={scrollToSizes}
+              className="flex items-center justify-center gap-1.5 px-3 h-11 font-label-caps text-label-caps text-[11px] tracking-wider transition-all duration-200 cursor-pointer rounded-[8px] border bg-white focus:outline-none"
+              style={{
+                borderColor: `${buttonColor}50`,
+                color: buttonColor,
+                background: `${buttonColor}08`,
+                minWidth: "75px"
+              }}
+              title="Change size"
             >
-              <Image
-                src={productImages[activeImageIndex] || product.featuredImage}
-                alt={product.title}
-                fill
-                sizes="56px"
-                className="object-cover"
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-label-caps text-label-caps text-primary">{product.title}</span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant text-[10px] mt-0.5">{selectedColor}</span>
-            </div>
+              <Ruler size={15} />
+              <span>{selectedSize}</span>
+            </button>
+
+            {/* Add to Cart Button */}
+            <button
+              onClick={() => handleAddToCart()}
+              className="animate-atc-glow flex-1 h-11 text-white font-label-caps text-label-caps uppercase flex items-center justify-center gap-2 rounded-[8px] cursor-pointer active:scale-95 transition-all text-xs font-bold focus:outline-none"
+              style={{
+                backgroundColor: buttonColor,
+                // @ts-ignore
+                "--atc-glow-color": `${buttonColor}73`,
+                // @ts-ignore
+                "--atc-glow-ring": `${buttonColor}26`,
+              }}
+            >
+              <ShoppingBag size={16} />
+              <span>Add to cart</span>
+            </button>
           </div>
 
-          {/* Divider */}
-          <div className="h-8 w-px bg-outline-variant/30 flex-shrink-0 hidden sm:block" />
+          {/* Desktop Layout: Full details shown only on desktop */}
+          <div className="hidden md:flex items-center justify-center gap-5 w-full">
+            {/* Thumbnail + title */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div
+                className="w-14 h-14 rounded-full overflow-hidden relative flex-shrink-0"
+                style={{ border: `2px solid ${buttonColor}40`, boxShadow: `0 0 0 3px ${buttonColor}18` }}
+              >
+                <Image
+                  src={productImages[activeImageIndex] || product.featuredImage}
+                  alt={product.title}
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-label-caps text-label-caps text-primary">{product.title}</span>
+                <span className="font-label-sm text-label-sm text-on-surface-variant text-[10px] mt-0.5">{selectedColor}</span>
+              </div>
+            </div>
 
-          {/* Size chip */}
-          <button
-            onClick={scrollToSizes}
-            className="flex items-center gap-1.5 px-3 h-9 font-label-caps text-label-caps text-[11px] tracking-wider transition-all duration-200 flex-shrink-0 cursor-pointer"
-            style={{
-              borderRadius: 6,
-              border: `1.5px solid ${buttonColor}50`,
-              color: buttonColor,
-              background: `${buttonColor}0D`,
-            }}
-            title="Change size"
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>straighten</span>
-            {selectedSize}
-          </button>
+            {/* Divider */}
+            <div className="h-8 w-px bg-outline-variant/30 flex-shrink-0" />
 
-          {/* Divider */}
-          <div className="h-8 w-px bg-outline-variant/30 flex-shrink-0 hidden sm:block" />
-
-          {/* Quantity */}
-          <div
-            className="flex items-center h-12 flex-shrink-0"
-            style={{
-              borderRadius: 8,
-              border: `1.5px solid ${buttonColor}30`,
-              background: "rgba(255,255,255,0.6)",
-              overflow: "hidden",
-            }}
-          >
+            {/* Size chip */}
             <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="w-11 h-full flex items-center justify-center font-bold text-lg transition-all duration-200 cursor-pointer"
-              style={{ color: "rgba(15,27,45,0.45)" }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${buttonColor}18`; e.currentTarget.style.color = buttonColor; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "rgba(15,27,45,0.45)"; }}
-            >−</button>
-            <span
-              className="w-8 text-center font-label-caps text-label-caps text-sm select-none"
-              style={{ color: buttonColor }}
-            >{quantity}</span>
-            <button
-              onClick={() => setQuantity(quantity + 1)}
-              className="w-11 h-full flex items-center justify-center font-bold text-lg transition-all duration-200 cursor-pointer"
-              style={{ color: "rgba(15,27,45,0.45)" }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${buttonColor}18`; e.currentTarget.style.color = buttonColor; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "rgba(15,27,45,0.45)"; }}
-            >+</button>
+              onClick={scrollToSizes}
+              className="flex items-center gap-1.5 px-3 h-9 font-label-caps text-label-caps text-[11px] tracking-wider transition-all duration-200 flex-shrink-0 cursor-pointer focus:outline-none"
+              style={{
+                borderRadius: 6,
+                border: `1.5px solid ${buttonColor}50`,
+                color: buttonColor,
+                background: `${buttonColor}0D`,
+              }}
+              title="Change size"
+            >
+              <Ruler size={14} />
+              {selectedSize}
+            </button>
+
+            {/* Divider */}
+            <div className="h-8 w-px bg-outline-variant/30 flex-shrink-0" />
+
+            {/* Quantity */}
+            <div
+              className="flex items-center h-12 flex-shrink-0"
+              style={{
+                borderRadius: 8,
+                border: `1.5px solid ${buttonColor}30`,
+                background: "rgba(255,255,255,0.6)",
+                overflow: "hidden",
+              }}
+            >
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="w-11 h-full flex items-center justify-center transition-all duration-300 cursor-pointer focus:outline-none"
+                style={{ color: "rgba(15, 27, 45, 0.6)" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = buttonColor;
+                  e.currentTarget.style.color = "#FFFFFF";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "rgba(15, 27, 45, 0.6)";
+                }}
+              >
+                <Minus size={14} />
+              </button>
+              <span
+                className="w-8 text-center font-label-caps text-label-caps text-sm select-none"
+                style={{ color: buttonColor }}
+              >{quantity}</span>
+              <button
+                onClick={() => setQuantity(quantity + 1)}
+                className="w-11 h-full flex items-center justify-center transition-all duration-300 cursor-pointer focus:outline-none"
+                style={{ color: "rgba(15, 27, 45, 0.6)" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = buttonColor;
+                  e.currentTarget.style.color = "#FFFFFF";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "rgba(15, 27, 45, 0.6)";
+                }}
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            {/* Divider */}
+            <div className="h-8 w-px bg-outline-variant/30 flex-shrink-0" />
+
+            {/* ATC Button */}
+            <motion.button
+              onClick={() => handleAddToCart()}
+              whileHover="hover"
+              initial="initial"
+              className="animate-atc-glow sticky-atc-btn h-12 px-8 text-white font-label-caps text-label-caps uppercase flex items-center gap-2 transition-all duration-200 active:scale-95 flex-shrink-0 cursor-pointer focus:outline-none"
+              style={{
+                backgroundColor: buttonColor,
+                borderRadius: 8,
+                // @ts-ignore
+                "--atc-glow-color": `${buttonColor}73`,
+                // @ts-ignore
+                "--atc-glow-ring": `${buttonColor}26`,
+              }}
+            >
+              <ShoppingBag size={18} />
+              <AnimatedLabel text="Add to cart" />
+            </motion.button>
           </div>
-
-          {/* ATC Button */}
-          <motion.button
-            onClick={handleAddToCart}
-            whileHover="hover"
-            initial="initial"
-            className="sticky-atc-btn h-12 px-8 text-white font-label-caps text-label-caps uppercase flex items-center gap-2 transition-all duration-200 active:scale-95 flex-shrink-0 cursor-pointer"
-            style={{
-              backgroundColor: buttonColor,
-              borderRadius: 8,
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>shopping_bag</span>
-            <AnimatedLabel text="Add to cart" />
-          </motion.button>
         </div>
       </div>
 
@@ -794,65 +1043,129 @@ export default function ProductDetailPage({ params }: PageProps) {
 
         {/* Cards grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {RECOMMENDED_VARIANTS.filter((v) => v.slug !== id).slice(0, 6).map((variant) => (
-            <Link
-              key={variant.slug}
-              href={`/products/ringer-tee?variant=${variant.slug}`}
-              className="group flex flex-col"
-            >
-              {/* Image */}
-              <div
-                className="relative aspect-[3/4] w-full overflow-hidden bg-surface-container-low"
-                style={{ borderRadius: "20px" }}
+          {RECOMMENDED_VARIANTS.filter((v) => v.slug !== id).slice(0, 6).map((variant) => {
+            const info = getColorVariantInfo(variant.slug);
+            return (
+              <Link
+                key={variant.slug}
+                href={`/products/ringer-tee?variant=${variant.slug}`}
+                className="group flex flex-col"
               >
-                <Image
-                  src={variant.image}
-                  alt={`THE RINGER TEE – ${variant.name}`}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-                  loading="lazy"
-                />
+                {/* Image */}
+                <div
+                  className="relative aspect-[3/4] w-full overflow-hidden bg-surface-container-low"
+                  style={{ borderRadius: "20px" }}
+                >
+                  <Image
+                    src={variant.image}
+                    alt={`THE RINGER TEE – ${variant.name}`}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                    className={`object-cover transition-all duration-500 ease-out group-hover:scale-[1.04] group-hover:blur-[2px] ${
+                      !info.inStock ? "opacity-60 grayscale-[30%]" : ""
+                    }`}
+                    loading="lazy"
+                  />
 
-                {/* Discount badge */}
-                {variant.discount && (
-                  <span
-                    className="absolute top-3 right-3 font-label-caps text-[10px] tracking-wider px-2 py-1"
-                    style={{
-                      background: "rgba(79,120,80,0.88)",
-                      color: "#fff",
-                      borderRadius: "999px",
-                      backdropFilter: "blur(8px)",
-                    }}
-                  >
-                    {variant.discount}
-                  </span>
-                )}
+                  {/* Top Left Badges */}
+                  <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+                    {!info.inStock && (
+                      <span
+                        className="font-label-caps text-[8px] px-2.5 py-1 font-bold tracking-widest uppercase text-white animate-fade-in"
+                        style={{
+                          backdropFilter: "blur(12px)",
+                          background: "rgba(15, 27, 45, 0.8)",
+                          borderRadius: "999px",
+                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                        }}
+                      >
+                        RESTOCKING
+                      </span>
+                    )}
+                    {info.inStock && info.stockCount <= 5 && (
+                      <span
+                        className="font-label-caps text-[8px] px-2.5 py-1 font-bold tracking-widest uppercase text-white animate-fade-in"
+                        style={{
+                          backdropFilter: "blur(12px)",
+                          background: "rgba(194, 138, 92, 0.85)",
+                          borderRadius: "999px",
+                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                        }}
+                      >
+                        LOW STOCK
+                      </span>
+                    )}
+                  </div>
 
-                {/* Hover quick-shop pill */}
-                <div className="absolute inset-x-3 bottom-3 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-250 ease-out pointer-events-none group-hover:pointer-events-auto">
-                  <div
-                    className="w-full py-2 text-center font-label-caps text-primary text-[10px] tracking-widest"
-                    style={{
-                      backdropFilter: "blur(20px)",
-                      background: "rgba(255,255,255,0.80)",
-                      border: "1px solid rgba(255,255,255,0.50)",
-                      borderRadius: "12px",
-                    }}
-                  >
-                    QUICK SHOP
+                  {/* Discount badge */}
+                  {variant.discount && (
+                    <span
+                      className="absolute top-3 right-3 font-label-caps text-[10px] tracking-wider px-2 py-1"
+                      style={{
+                        background: "rgba(79,120,80,0.88)",
+                        color: "#fff",
+                        borderRadius: "999px",
+                        backdropFilter: "blur(8px)",
+                      }}
+                    >
+                      {variant.discount}
+                    </span>
+                  )}
+
+                  {/* Glass Quick Add overlay (Centered, Desktop only hover) */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto hidden md:flex">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (info.inStock) {
+                          addToCart(product, info.variantId);
+                        }
+                      }}
+                      disabled={!info.inStock}
+                      className="group/btn relative overflow-hidden h-10 w-[120px] hover:w-10 rounded-full flex items-center justify-center text-white transition-all duration-300 ease-out cursor-pointer pointer-events-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        background: "rgba(194, 138, 92, 0.4)", // copper frosted glass
+                        backdropFilter: "blur(12px)",
+                        WebkitBackdropFilter: "blur(12px)",
+                        border: "1.5px solid rgba(255, 255, 255, 0.25)",
+                        boxShadow: "0 8px 32px rgba(15, 27, 45, 0.15)",
+                      }}
+                      title="Quick Shop"
+                    >
+                      {/* Text container */}
+                      <span className="font-label-caps text-label-caps text-[9px] tracking-widest font-bold transition-all duration-300 whitespace-nowrap opacity-100 scale-100 group-hover/btn:opacity-0 group-hover/btn:scale-75 absolute">
+                        Quick Shop
+                      </span>
+                      {/* Icon container */}
+                      <span className="opacity-0 scale-75 transition-all duration-300 absolute group-hover/btn:opacity-100 group-hover/btn:scale-100 flex items-center justify-center">
+                        <ShoppingBag size={16} />
+                      </span>
+                    </button>
                   </div>
                 </div>
-              </div>
 
               {/* Info */}
               <div className="flex flex-col pt-2.5 px-0.5">
                 <span className="font-label-caps text-[9px] text-on-surface-variant tracking-widest">THE RINGER TEE</span>
                 <h3 className="font-body-md text-body-md text-primary font-semibold mt-0.5 truncate text-sm">{variant.name}</h3>
-                <span className="font-label-caps text-label-caps text-primary mt-1 text-[11px]">LE 700</span>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="font-label-caps text-label-caps text-primary text-[11px]">
+                    LE 700.00
+                  </span>
+                  <span className="font-label-caps text-[10px] text-on-surface-variant/40 line-through">
+                    LE 875.00
+                  </span>
+                  <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[9px] px-2 py-0.5 rounded-full font-bold tracking-wider">
+                    20% OFF
+                  </span>
+                </div>
               </div>
             </Link>
-          ))}
+          );
+        })}
         </div>
       </div>
 
@@ -882,7 +1195,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                 className="text-neutral-500 hover:text-black transition-colors cursor-pointer flex items-center justify-center w-8 h-8 rounded-full hover:bg-neutral-200"
                 aria-label="Close modal"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <X size={20} />
               </button>
             </div>
 
@@ -899,6 +1212,123 @@ export default function ProductDetailPage({ params }: PageProps) {
             <p className="font-label-caps text-[9px] text-neutral-400 tracking-wider uppercase text-center">
               All measurements are in centimeters (cm). If you are between sizes, we recommend sizing up.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {isLightboxOpen && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black/95 backdrop-blur-md animate-fade-in">
+          {/* Header Controls */}
+          <div className="flex justify-between items-center px-6 py-4 z-10 text-white border-b border-white/10">
+            <span className="font-label-caps text-xs tracking-widest uppercase">
+              Image {activeImageIndex + 1} of {productImages.length}
+            </span>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setLightboxZoom(Math.max(1, lightboxZoom - 0.5))}
+                className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer text-white disabled:opacity-50"
+                title="Zoom Out"
+                disabled={lightboxZoom === 1}
+              >
+                <Minus size={20} />
+              </button>
+              <span className="font-mono text-sm w-12 text-center select-none">
+                {Math.round(lightboxZoom * 100)}%
+              </span>
+              <button
+                onClick={() => setLightboxZoom(Math.min(3, lightboxZoom + 0.5))}
+                className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer text-white disabled:opacity-50"
+                title="Zoom In"
+                disabled={lightboxZoom === 3}
+              >
+                <Plus size={20} />
+              </button>
+              <button
+                onClick={() => {
+                  setLightboxZoom(1);
+                  setIsLightboxOpen(false);
+                }}
+                className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer text-white"
+                title="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Zoom Area */}
+          <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
+            {/* Left navigation arrow */}
+            {productImages.length > 1 && (
+              <button
+                onClick={() => {
+                  setLightboxZoom(1);
+                  setActiveImageIndex((activeImageIndex - 1 + productImages.length) % productImages.length);
+                }}
+                className="absolute left-6 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all cursor-pointer"
+                aria-label="Previous image"
+              >
+                <ChevronLeft size={24} />
+              </button>
+            )}
+
+            {/* Right navigation arrow */}
+            {productImages.length > 1 && (
+              <button
+                onClick={() => {
+                  setLightboxZoom(1);
+                  setActiveImageIndex((activeImageIndex + 1) % productImages.length);
+                }}
+                className="absolute right-6 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all cursor-pointer"
+                aria-label="Next image"
+              >
+                <ChevronRight size={24} />
+              </button>
+            )}
+
+            {/* Interactive Image Container */}
+            <div className="relative w-full max-w-4xl h-[70vh] flex items-center justify-center overflow-hidden rounded-2xl select-none">
+              <motion.div
+                className="relative w-full h-full cursor-grab active:cursor-grabbing flex items-center justify-center"
+                drag={lightboxZoom > 1}
+                dragConstraints={{ left: -300, right: 300, top: -200, bottom: 200 }}
+                style={{ scale: lightboxZoom }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <Image
+                  src={productImages[activeImageIndex]}
+                  alt={product.title}
+                  fill
+                  className="object-contain"
+                  priority
+                  draggable={false}
+                />
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Thumbnail Strip at bottom */}
+          <div className="py-4 bg-black/40 border-t border-white/10 overflow-x-auto flex justify-center gap-3 px-6 hide-scrollbar">
+            {productImages.map((img, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setLightboxZoom(1);
+                  setActiveImageIndex(idx);
+                }}
+                className={`w-14 h-18 relative rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${
+                  activeImageIndex === idx ? "border-white scale-105" : "border-white/20 opacity-60 hover:opacity-100"
+                }`}
+              >
+                <Image
+                  src={img}
+                  alt={`Lightbox thumbnail ${idx + 1}`}
+                  fill
+                  className="object-cover"
+                />
+              </button>
+            ))}
           </div>
         </div>
       )}

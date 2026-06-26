@@ -47,7 +47,7 @@ export default function FAQPage() {
   ];
 
   return (
-    <div className="w-full max-w-[800px] mx-auto px-margin-mobile md:px-0 py-section-gap">
+    <div className="w-full max-w-[800px] mx-auto px-margin-mobile md:px-0 py-12 md:py-section-gap">
       <span className="font-label-caps text-label-caps text-tertiary tracking-widest block mb-4">
         SUPPORT
       </span>

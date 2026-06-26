@@ -222,19 +222,4 @@ body {
 @utility shimmer-delay-5  { &::before { animation-delay: 1.5s;  } }
 @utility shimmer-delay-6  { &::before { animation-delay: 1.8s;  } }
 
-/* Material Symbols Outlined Custom Class */
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-}
+

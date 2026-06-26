@@ -3,12 +3,56 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useCart } from "@/context/CartContext";
+import { ringerTeeProduct } from "@/data/dummyData";
+import { ShoppingBag } from "lucide-react";
 
 export default function Home() {
+  const { addToCart } = useCart();
+
+  const getVariantStockCount = (variantId?: string) => {
+    if (!variantId) return 0;
+    const v = ringerTeeProduct.variants.find((x) => x.id === variantId);
+    if (!v || !v.available) return 0;
+    if (variantId.endsWith("_s") || variantId.endsWith("_xl")) return 3;
+    if (variantId.endsWith("_l")) return 4;
+    return 15;
+  };
+
+  // Helper to determine color variant stock status and first available variant
+  const getColorVariantInfo = (slug: string) => {
+    const colorMap: { [key: string]: string } = {
+      "black-white": "Black / White",
+      "creamy-olive": "Creamy / Olive",
+      "creamy-burgundy": "Creamy / Burgundy",
+      "olive-white": "Olive / White",
+      "rose-white": "Rose / White",
+      "army-white": "Army / White",
+      "burgundy-white": "Burgundy / White",
+    };
+    const colorName = colorMap[slug];
+    const colorVariants = ringerTeeProduct.variants.filter(
+      (v) => v.options.Color === colorName
+    );
+    const inStock = colorVariants.some((v) => v.available);
+    
+    // Default to M size if available, otherwise first available size
+    const mVariant = colorVariants.find((v) => v.options.Size === "M" && v.available);
+    const firstAvailable = mVariant || colorVariants.find((v) => v.available);
+    const firstAvailableId = firstAvailable?.id || colorVariants[0]?.id;
+    const stockCount = getVariantStockCount(firstAvailableId);
+    
+    return {
+      inStock,
+      variantId: firstAvailableId,
+      stockCount
+    };
+  };
+
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="relative w-full h-[870px] min-h-[600px] flex items-end pb-section-gap">
+      <section className="relative w-full h-[870px] min-h-[600px] flex items-end pb-12 md:pb-section-gap">
         <div className="absolute inset-0 z-0">
           <Image
             src="/assets/home-page-cover-page.jpeg"
@@ -35,7 +79,7 @@ export default function Home() {
             <div className="flex items-center gap-stack-md">
               <Link 
                 href="/products/ringer-tee" 
-                className="inline-flex items-center justify-center bg-surface text-primary px-8 py-4 font-label-caps text-label-caps uppercase hover:bg-surface-container-highest transition-colors duration-300 w-max"
+                className="inline-flex items-center justify-center bg-surface text-primary px-8 py-4 font-label-caps text-label-caps uppercase hover:bg-surface-container-highest transition-colors duration-300 w-max rounded-[8px]"
               >
                 Shop Ringer Tee
               </Link>
@@ -44,18 +88,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Product Story Bento Grid */}
+      {/* Explore Collections Bento Grid */}
       <section id="product-story" className="w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
         <div className="flex justify-between items-end mb-stack-lg border-b border-outline-variant/20 pb-4">
-          <h2 className="font-display-md text-display-md text-primary uppercase">PRODUCT STORY</h2>
+          <h2 className="font-display-md text-display-md text-primary uppercase">EXPLORE COLLECTIONS</h2>
         </div>
 
         <div className="grid grid-cols-4 md:grid-cols-12 gap-gutter md:grid-rows-[400px_400px]">
           
-          {/* Card 1: Large Feature (Left) */}
+          {/* Card 1: Large Feature (Left) - responsive mobile height fix */}
           <Link 
-            href="/products/ringer-tee"
-            className="group relative col-span-4 md:col-span-5 md:row-span-2 bg-surface-container-low overflow-hidden"
+            href="/products"
+            className="group relative col-span-4 md:col-span-5 md:row-span-2 bg-surface-container-low overflow-hidden h-[400px] md:h-auto rounded-[24px] shadow-sm"
           >
             <Image
               src="/assets/BLACK/atef-front.jpg"
@@ -66,7 +110,7 @@ export default function Home() {
             />
             <div className="absolute inset-0 bg-primary/10 group-hover:bg-primary/0 transition-colors duration-500" />
             <div className="absolute bottom-margin-mobile md:bottom-margin-desktop left-1/2 -translate-x-1/2">
-              <div className="bg-primary-container text-on-primary-container px-6 py-3 font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-md whitespace-nowrap">
+              <div className="bg-primary-container text-on-primary-container px-6 py-3 font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-md whitespace-nowrap rounded-[12px]">
                 THE RINGER TEE
               </div>
             </div>
@@ -74,8 +118,8 @@ export default function Home() {
 
           {/* Card 2: Top Right */}
           <Link 
-            href="/products/ringer-tee"
-            className="group relative col-span-4 md:col-span-7 bg-surface-container-low overflow-hidden h-[400px] md:h-auto"
+            href="/products"
+            className="group relative col-span-4 md:col-span-7 bg-surface-container-low overflow-hidden h-[350px] md:h-auto rounded-[24px] shadow-sm"
           >
             <Image
               src="/assets/CREAMY-OLIVE/nour-front_1.jpg"
@@ -86,16 +130,16 @@ export default function Home() {
             />
             <div className="absolute inset-0 bg-primary/10 group-hover:bg-primary/0 transition-colors duration-500" />
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-              <div className="bg-primary-container text-on-primary-container px-6 py-3 font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-md">
-                PREMIUM COTTON
+              <div className="bg-primary-container text-on-primary-container px-6 py-3 font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-md rounded-[12px]">
+                COTTON ESSENTIALS
               </div>
             </div>
           </Link>
 
           {/* Card 3: Bottom Right Split 1 */}
           <Link 
-            href="/products/ringer-tee"
-            className="group relative col-span-2 md:col-span-4 bg-surface-container-low overflow-hidden h-[300px] md:h-auto"
+            href="/products"
+            className="group relative col-span-2 md:col-span-4 bg-surface-container-low overflow-hidden h-[280px] md:h-auto rounded-[24px] shadow-sm"
           >
             <Image
               src="/assets/OLIVE-WHITE/gogo-front_1.jpg"
@@ -106,16 +150,16 @@ export default function Home() {
             />
             <div className="absolute inset-0 bg-primary/10 group-hover:bg-primary/0 transition-colors duration-500" />
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-              <div className="bg-primary-container text-on-primary-container px-4 py-2 font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-md text-[10px] md:text-[12px]">
-                RELAXED FIT
+              <div className="bg-primary-container text-on-primary-container px-4 py-2 font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-md text-[10px] md:text-[12px] rounded-[8px]">
+                ARCHITECTURAL FIT
               </div>
             </div>
           </Link>
 
           {/* Card 4: Bottom Right Split 2 */}
           <Link 
-            href="/products/ringer-tee"
-            className="group relative col-span-2 md:col-span-3 bg-surface-container-low overflow-hidden h-[300px] md:h-auto"
+            href="/products"
+            className="group relative col-span-2 md:col-span-3 bg-surface-container-low overflow-hidden h-[280px] md:h-auto rounded-[24px] shadow-sm"
           >
             <Image
               src="/assets/ROSE/nour-1.jpg"
@@ -126,8 +170,8 @@ export default function Home() {
             />
             <div className="absolute inset-0 bg-primary/10 group-hover:bg-primary/0 transition-colors duration-500" />
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-              <div className="bg-primary-container text-on-primary-container px-4 py-2 font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-md text-[10px] md:text-[12px]">
-                EVERYDAY ESSENTIAL
+              <div className="bg-primary-container text-on-primary-container px-4 py-2 font-label-caps text-label-caps uppercase tracking-widest backdrop-blur-md text-[10px] md:text-[12px] rounded-[8px]">
+                NEW ARRIVALS
               </div>
             </div>
           </Link>
@@ -144,7 +188,7 @@ export default function Home() {
           <h2 className="font-display-md text-display-md text-primary uppercase">SHOP ALL COLORS</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-gutter">
           {[
             { name: "BLACK / WHITE", slug: "black-white", image: "/assets/BLACK/atef-front.jpg" },
             { name: "CREAMY / OLIVE", slug: "creamy-olive", image: "/assets/CREAMY-OLIVE/nour-front_1.jpg" },
@@ -153,61 +197,149 @@ export default function Home() {
             { name: "ROSE / WHITE", slug: "rose-white", image: "/assets/ROSE/nour-1.jpg" },
             { name: "ARMY / WHITE", slug: "army-white", image: "/assets/ARMY/atef-front_2.jpg" },
             { name: "BURGUNDY / WHITE", slug: "burgundy-white", image: "/assets/BURGUNDY/hana-front_1.jpg" }
-          ].map((variant) => (
-            <Link
-              key={variant.slug}
-              href={`/products/ringer-tee?variant=${variant.slug}`}
-              className="group flex flex-col h-full"
-            >
-              {/* Card Image */}
-              <div
-                className="relative overflow-hidden aspect-[3/4] w-full bg-surface-container-low"
-                style={{
-                  borderRadius: "24px",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-                  transition: "box-shadow 0.3s ease",
-                }}
+          ].map((variant) => {
+            const info = getColorVariantInfo(variant.slug);
+            return (
+              <Link
+                key={variant.slug}
+                href={`/products/ringer-tee?variant=${variant.slug}`}
+                className="group flex flex-col h-full bg-white p-2.5 sm:p-3 rounded-[20px] sm:rounded-[32px] border border-neutral-200/40 shadow-sm hover:shadow-md transition-all duration-300"
               >
-                <Image
-                  src={variant.image}
-                  alt={`THE RINGER TEE - ${variant.name}`}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                  loading="lazy"
-                />
+                {/* Card Image */}
+                <div
+                  className="relative overflow-hidden aspect-[3/4] w-full bg-surface-container-low"
+                  style={{
+                    borderRadius: "24px",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+                    transition: "box-shadow 0.3s ease",
+                  }}
+                >
+                  <Image
+                    src={variant.image}
+                    alt={`THE RINGER TEE - ${variant.name}`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    className={`object-cover transition-all duration-500 ease-out group-hover:scale-[1.03] group-hover:blur-[2px] ${
+                      !info.inStock ? "opacity-60 grayscale-[30%]" : ""
+                    }`}
+                    loading="lazy"
+                  />
 
-                {/* Glass Quick Add overlay */}
-                <div className="absolute bottom-0 left-0 right-0 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-[250ms] ease-out px-3 pb-3 pointer-events-none group-hover:pointer-events-auto">
-                  <div
-                    className="w-full py-3 text-center font-label-caps text-primary text-[11px] tracking-widest"
-                    style={{
-                      backdropFilter: "blur(20px)",
-                      background: "rgba(255,255,255,0.75)",
-                      border: "1px solid rgba(255,255,255,0.45)",
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.10)",
-                      borderRadius: "14px",
-                    }}
-                  >
-                    QUICK SHOP
+                  {/* Top Left Badges */}
+                  <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                    {!info.inStock && (
+                      <span
+                        className="font-label-caps text-[9px] px-2.5 py-1 font-bold tracking-widest uppercase text-white animate-fade-in"
+                        style={{
+                          backdropFilter: "blur(12px)",
+                          background: "rgba(15, 27, 45, 0.8)",
+                          borderRadius: "999px",
+                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                        }}
+                      >
+                        RESTOCKING
+                      </span>
+                    )}
+                    {info.inStock && info.stockCount <= 5 && (
+                      <span
+                        className="font-label-caps text-[9px] px-2.5 py-1 font-bold tracking-widest uppercase text-white animate-fade-in"
+                        style={{
+                          backdropFilter: "blur(12px)",
+                          background: "rgba(194, 138, 92, 0.85)",
+                          borderRadius: "999px",
+                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                        }}
+                      >
+                        LOW STOCK
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Glass Quick Add overlay (Centered, Desktop only hover) */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto hidden md:flex">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (info.inStock) {
+                          addToCart(ringerTeeProduct, info.variantId);
+                        }
+                      }}
+                      disabled={!info.inStock}
+                      className="group/btn relative overflow-hidden h-12 w-[140px] hover:w-12 rounded-full flex items-center justify-center text-white transition-all duration-300 ease-out cursor-pointer pointer-events-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        background: "rgba(194, 138, 92, 0.4)", // copper frosted glass
+                        backdropFilter: "blur(12px)",
+                        WebkitBackdropFilter: "blur(12px)",
+                        border: "1.5px solid rgba(255, 255, 255, 0.25)",
+                        boxShadow: "0 8px 32px rgba(15, 27, 45, 0.15)",
+                      }}
+                      title="Quick Shop"
+                    >
+                      {/* Text container */}
+                      <span className="font-label-caps text-label-caps text-[11px] tracking-widest font-bold transition-all duration-300 whitespace-nowrap opacity-100 scale-100 group-hover/btn:opacity-0 group-hover/btn:scale-75 absolute">
+                        Quick Shop
+                      </span>
+                      {/* Icon container */}
+                      <span className="opacity-0 scale-75 transition-all duration-300 absolute group-hover/btn:opacity-100 group-hover/btn:scale-100 flex items-center justify-center">
+                        <ShoppingBag size={18} />
+                      </span>
+                    </button>
                   </div>
                 </div>
-              </div>
 
-              {/* Card Info */}
-              <div className="flex flex-col pt-3 px-1">
-                <span className="font-label-caps text-label-caps text-on-surface-variant tracking-wider text-[10px]">
-                  THE RINGER TEE
-                </span>
-                <h3 className="font-body-lg text-body-lg text-primary font-bold uppercase mt-1">
-                  {variant.name}
-                </h3>
-                <span className="font-label-caps text-label-caps text-primary mt-1">
-                  LE 700
-                </span>
-              </div>
-            </Link>
-          ))}
+                {/* Card Info & CTA Button */}
+                <div className="flex flex-col pt-3 px-1 flex-1 justify-between">
+                  <div>
+                    <span className="font-label-caps text-label-caps text-on-surface-variant tracking-wider text-[10px]">
+                      THE RINGER TEE
+                    </span>
+                    <h3 className="font-body-md sm:font-body-lg text-xs sm:text-body-lg text-primary font-bold uppercase mt-1 line-clamp-2">
+                      {variant.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="font-label-caps text-label-caps text-primary">
+                        LE 700.00
+                      </span>
+                      <span className="font-label-caps text-[10px] text-on-surface-variant/40 line-through">
+                        LE 875.00
+                      </span>
+                      <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[9px] px-2 py-0.5 rounded-full font-bold tracking-wider">
+                        20% OFF
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CTA Action (Responsive, Add to Cart or View Product) */}
+                  <div className="mt-4 w-full">
+                    {info.inStock ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          addToCart(ringerTeeProduct, info.variantId);
+                        }}
+                        className="w-full py-2.5 sm:py-3 bg-[#0F1B2D] hover:bg-[#1C2D42] text-white font-label-caps text-[9px] sm:text-[10.5px] tracking-widest uppercase rounded-[8px] transition-colors font-bold text-center cursor-pointer focus:outline-none"
+                      >
+                        Add to Cart
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          // Link routing handles click naturally
+                        }}
+                        className="w-full py-2.5 sm:py-3 bg-white hover:bg-neutral-50 text-[#0F1B2D] border border-neutral-300 font-label-caps text-[9px] sm:text-[10.5px] tracking-widest uppercase rounded-[8px] transition-all font-bold text-center cursor-pointer focus:outline-none"
+                      >
+                        View Product
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

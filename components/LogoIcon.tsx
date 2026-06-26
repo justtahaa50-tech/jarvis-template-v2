@@ -23,7 +23,7 @@ export const LogoIcon: React.FC<{ className?: string }> = ({ className }) => {
       onMouseLeave={() => setHovered(false)}
       aria-label="Jarvis home"
     >
-      {/* ── Base layer (always visible, slightly dim) ── */}
+      {/* ── Base layer (always visible, white) ── */}
       <Image
         src="/assets/header-icon.svg"
         alt="Jarvis logo"
@@ -32,26 +32,33 @@ export const LogoIcon: React.FC<{ className?: string }> = ({ className }) => {
         style={{
           objectFit: "contain",
           filter: "brightness(0) invert(1)",   /* white */
-          opacity: 0.75,
-          transition: "opacity 0.45s ease",
+          opacity: 0.9,
+          transition: "opacity 0.3s ease",
         }}
       />
 
-      {/* ── Fill layer (golden, revealed bottom-to-top on hover) ── */}
-      <Image
-        src="/assets/header-icon.svg"
-        alt=""
-        aria-hidden="true"
-        fill
-        sizes="42px"
+      {/* ── Shimmer sweep overlay (masked to SVG shape) ── */}
+      <span
+        className="absolute inset-0 pointer-events-none overflow-hidden"
         style={{
-          objectFit: "contain",
-          filter: "brightness(0) saturate(100%) invert(68%) sepia(30%) saturate(500%) hue-rotate(340deg) brightness(105%)",
-          /* clip reveals from the bottom: inset(top right bottom left) */
-          clipPath: hovered ? "inset(0% 0% 0% 0%)" : "inset(100% 0% 0% 0%)",
-          transition: "clip-path 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+          WebkitMaskImage: "url('/assets/header-icon.svg')",
+          maskImage: "url('/assets/header-icon.svg')",
+          WebkitMaskSize: "contain",
+          maskSize: "contain",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 0.25s ease",
         }}
-      />
+      >
+        <span
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent"
+          style={{
+            transform: hovered ? "translateX(100%) skewX(-20deg)" : "translateX(-100%) skewX(-20deg)",
+            transition: hovered ? "transform 0.75s cubic-bezier(0.25, 1, 0.5, 1)" : "none",
+          }}
+        />
+      </span>
     </span>
   );
 };

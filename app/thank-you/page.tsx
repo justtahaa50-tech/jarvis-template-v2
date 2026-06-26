@@ -3,12 +3,18 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+
+import { CheckCircle2, Package, Truck, Home, Headphones, Mail, MessageCircle } from "lucide-react";
+import successJson from "../../public/assets/success-checkmark.json";
+
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 const ORDER_STEPS = [
-  { label: "Order Confirmed", done: true, icon: "check_circle" },
-  { label: "Preparing Your Order", done: true, icon: "inventory_2" },
-  { label: "Shipped", done: false, icon: "local_shipping" },
-  { label: "Delivered", done: false, icon: "home" },
+  { label: "Order Confirmed", done: true, icon: CheckCircle2 },
+  { label: "Preparing Your Order", done: true, icon: Package },
+  { label: "Shipped", done: false, icon: Truck },
+  { label: "Delivered", done: false, icon: Home },
 ];
 
 const WHAT_NEXT = [
@@ -79,7 +85,7 @@ export default function ThankYouPage() {
             JARVIS
           </Link>
           <Link
-            href="/products/ringer-tee"
+            href="/products"
             className="font-label-caps text-label-caps text-on-surface-variant text-[11px] tracking-widest hover:text-primary transition-colors"
           >
             CONTINUE SHOPPING
@@ -95,17 +101,22 @@ export default function ThankYouPage() {
       >
         {/* Confirmation pill */}
         <div
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full mb-8"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full mb-4"
           style={{
             backdropFilter: "blur(16px)",
             background: "rgba(78,122,99,0.10)",
             border: "1px solid rgba(78,122,99,0.22)",
           }}
         >
-          <span className="material-symbols-outlined text-success text-[16px]">check_circle</span>
+          <CheckCircle2 className="text-success" size={16} />
           <span className="font-label-caps text-label-caps text-success text-[11px] tracking-widest">
             ORDER CONFIRMED
           </span>
+        </div>
+
+        {/* Lottie Success Animation */}
+        <div className="w-40 h-40 mb-4 flex items-center justify-center">
+          <Lottie animationData={successJson} loop={false} style={{ width: 160, height: 160 }} />
         </div>
 
         <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-xl md:text-headline-xl text-primary uppercase leading-none tracking-tight max-w-2xl">
@@ -124,7 +135,7 @@ export default function ThankYouPage() {
             Back to Home
           </Link>
           <Link
-            href="/products/ringer-tee"
+            href="/products"
             className="inline-flex items-center gap-2 border border-primary text-primary px-8 py-4 font-label-caps text-label-caps uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all duration-300 rounded-xl text-sm"
           >
             Shop More Colors
@@ -159,12 +170,10 @@ export default function ThankYouPage() {
                         : { background: "#D8DADF", border: "2px solid #D8DADF" }
                     }
                   >
-                    <span
-                      className="material-symbols-outlined text-[20px]"
+                    <step.icon
+                      size={20}
                       style={{ color: step.done ? "#F7F6F2" : "#9EA3AB" }}
-                    >
-                      {step.icon}
-                    </span>
+                    />
                   </div>
                   <div className="md:text-center">
                     <p
@@ -262,7 +271,7 @@ export default function ThankYouPage() {
               boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
             }}
           >
-            <span className="material-symbols-outlined text-primary text-[32px]">support_agent</span>
+            <Headphones className="text-primary" size={32} />
             <div>
               <h3 className="font-display-md text-display-md text-primary uppercase mb-2">Need Help?</h3>
               <p className="font-body-md text-body-md text-on-surface-variant text-sm">
@@ -274,7 +283,7 @@ export default function ThankYouPage() {
                 href="mailto:support@jarvis.eg"
                 className="flex items-center gap-3 font-label-caps text-label-caps text-[11px] text-primary tracking-widest hover:opacity-70 transition-opacity"
               >
-                <span className="material-symbols-outlined text-[18px]">mail</span>
+                <Mail size={18} />
                 support@jarvis.eg
               </a>
               <a
@@ -283,7 +292,7 @@ export default function ThankYouPage() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 font-label-caps text-label-caps text-[11px] text-primary tracking-widest hover:opacity-70 transition-opacity"
               >
-                <span className="material-symbols-outlined text-[18px]">chat</span>
+                <MessageCircle size={18} />
                 WhatsApp Support
               </a>
             </div>

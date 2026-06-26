@@ -15,7 +15,7 @@ interface CartContextType {
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
   cartItems: CartItem[];
-  addToCart: (product: Product, variantId: string, quantity?: number) => void;
+  addToCart: (product: Product, variantId: string, quantity?: number, openCart?: boolean) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   cartCount: number;
@@ -28,13 +28,33 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Start with a clean empty cart on mount
+  // Load cart items from localStorage on client mount
   useEffect(() => {
-    setCartItems([]);
+    try {
+      const stored = localStorage.getItem("jarvis_cart");
+      if (stored) {
+        setCartItems(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error("Failed to load cart from localStorage", e);
+    }
+    setIsLoaded(true);
   }, []);
 
-  const addToCart = (product: Product, variantId: string, quantity = 1) => {
+  // Save cart items to localStorage on changes after initial mount
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        localStorage.setItem("jarvis_cart", JSON.stringify(cartItems));
+      } catch (e) {
+        console.error("Failed to save cart to localStorage", e);
+      }
+    }
+  }, [cartItems, isLoaded]);
+
+  const addToCart = (product: Product, variantId: string, quantity = 1, openCart = true) => {
     setCartItems((prevItems) => {
       // Find variant details
       const variant = product.variants.find(v => v.id === variantId);
@@ -56,7 +76,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         price
       }];
     });
-    setIsCartOpen(true);
+    if (openCart) {
+      setIsCartOpen(true);
+    }
   };
 
   const removeFromCart = (itemId: string) => {

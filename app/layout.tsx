@@ -1,32 +1,21 @@
 import type { Metadata } from "next";
-import { Chivo, JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
+import { WishlistProvider } from "@/context/WishlistContext";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
+import ToastPortal from "@/components/ToastPortal";
 
-const chivo = Chivo({
-  subsets: ["latin"],
-  variable: "--font-chivo",
-  weight: ["400", "600", "700", "800"],
-  display: "swap",
-});
+import Preloader from "@/components/Preloader";
 
 const satoshi = localFont({
   src: "../public/assets/Satoshi-Variable.ttf",
   variable: "--font-satoshi",
   display: "swap",
   weight: "300 900",
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains",
-  weight: ["500"],
-  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -41,24 +30,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <head>
-        {/* Material Symbols Outlined */}
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" 
-        />
-      </head>
+      <head />
       <body
-        className={`${chivo.variable} ${satoshi.variable} ${jetbrains.variable} bg-surface text-on-surface antialiased`}
+        className={`${satoshi.variable} bg-surface text-on-surface antialiased`}
+        style={{ fontFamily: "var(--font-satoshi), sans-serif" }}
       >
+        <Preloader />
+
         <CartProvider>
-          <AnnouncementBar />
-          <Header />
-          <main id="MainContent" className="focus-none">
-            {children}
-          </main>
-          <Footer />
-          <CartDrawer />
+          <WishlistProvider>
+            <AnnouncementBar />
+            <Header />
+            <main id="MainContent" className="focus-none">
+              {children}
+            </main>
+            <Footer />
+            <CartDrawer />
+            <ToastPortal />
+          </WishlistProvider>
         </CartProvider>
       </body>
     </html>
