@@ -1,13 +1,69 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { LogoIcon } from "@/components/LogoIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Search, User, Heart, ShoppingBag, X } from "lucide-react";
+
+// ─── Inline Search Widget ────────────────────────────────────────────────────
+function SearchWidget() {
+  const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (expanded && inputRef.current) inputRef.current.focus();
+  }, [expanded]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+      setExpanded(false);
+      setQuery("");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { setExpanded(false); setQuery(""); }
+  };
+
+  if (expanded) {
+    return (
+      <form onSubmit={handleSubmit} className="flex items-center gap-1">
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Search products…"
+          className="w-40 md:w-52 bg-white/10 border border-white/20 focus:border-[#C28a5c]/60 text-white placeholder:text-white/40 rounded-lg px-3 py-1.5 text-xs font-body-md outline-none transition-all duration-200"
+        />
+        <button type="submit" className="p-1.5 text-white/70 hover:text-white cursor-pointer focus:outline-none">
+          <Search size={16} />
+        </button>
+        <button type="button" onClick={() => { setExpanded(false); setQuery(""); }} className="p-1.5 text-white/50 hover:text-white cursor-pointer focus:outline-none">
+          <X size={15} />
+        </button>
+      </form>
+    );
+  }
+
+  return (
+    <button
+      aria-label="Search"
+      onClick={() => setExpanded(true)}
+      className="p-2 hover:opacity-70 transition-opacity cursor-pointer flex items-center justify-center"
+    >
+      <Search size={20} />
+    </button>
+  );
+}
 
 const Header: React.FC = () => {
   const pathname = usePathname();
@@ -98,13 +154,16 @@ const Header: React.FC = () => {
 
           {/* Trailing Icons */}
           <div className="flex items-center gap-stack-sm md:gap-stack-md text-[#F7F6F2]">
-            <button aria-label="search" className="p-2 hover:opacity-70 transition-opacity cursor-pointer flex items-center justify-center">
-              <Search size={20} />
-            </button>
+            {/* Search — inline expandable on desktop, navigates to /search */}
+            <SearchWidget />
 
-            <button aria-label="person" className="p-2 hover:opacity-70 transition-opacity hidden md:flex items-center justify-center cursor-pointer">
+            <Link
+              href="/profile"
+              aria-label="My Account"
+              className="p-2 hover:opacity-70 transition-opacity hidden md:flex items-center justify-center cursor-pointer"
+            >
               <User size={20} />
-            </button>
+            </Link>
 
             <Link
               href="/wishlist"
@@ -190,12 +249,12 @@ const Header: React.FC = () => {
               {/* Quick Actions */}
               <div className="border-t border-white/10 pt-6 flex flex-col gap-4">
                 <Link
-                  href="/about"
+                  href="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-3 text-[#F7F6F2]/75 hover:text-white"
                 >
                   <User size={18} />
-                  <span className="font-label-caps text-xs">Profile</span>
+                  <span className="font-label-caps text-xs">My Profile</span>
                 </Link>
                 <Link
                   href="/wishlist"

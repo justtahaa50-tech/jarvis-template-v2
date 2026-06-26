@@ -376,7 +376,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         }`}>
           {displayLabel}
         </h3>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
+        <div className="flex items-center gap-1.5 mt-1">
           <span className={`font-label-caps text-primary font-bold ${
             gridCols >= 5 ? "text-[11px]" : "text-label-caps"
           }`}>
@@ -387,11 +387,46 @@ const ProductCard: React.FC<ProductCardProps> = ({
           }`}>
             LE {(product.price / 0.8).toFixed(2)}
           </span>
-          <span className={`bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps font-bold tracking-wider rounded-full ${
-            gridCols >= 5 ? "text-[8px] px-1.5 py-0.5" : "text-[9px] px-2 py-0.5"
-          }`}>
-            20% OFF
-          </span>
+        </div>
+        {/* Discount badge — always on its own line so it's visible on mobile narrow cards */}
+        <span className={`inline-block w-fit bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps font-bold tracking-wider rounded-full mt-0.5 ${
+          gridCols >= 5 ? "text-[8px] px-1.5 py-0.5" : "text-[9px] px-2 py-0.5"
+        }`}>
+          20% OFF
+        </span>
+
+        {/* Mobile CTA row — always visible, hidden on md+ since desktop uses hover overlay */}
+        <div className={`md:hidden flex items-center gap-2 mt-3 ${
+          gridCols >= 3 ? "hidden" : "flex"
+        }`}>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleQuickShop(e);
+            }}
+            disabled={!isAvailable}
+            className="flex-1 py-2 bg-[#0F1B2D] hover:bg-[#1C2D42] text-white font-label-caps text-[9px] tracking-widest uppercase rounded-[8px] transition-colors font-bold flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ShoppingBag size={10} />
+            <span>Add</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleFavorite(e);
+            }}
+            aria-label="Add to wishlist"
+            className="flex-shrink-0 w-8 h-8 rounded-[8px] border border-neutral-200 flex items-center justify-center text-[#0F1B2D] hover:text-[#ba1a1a] hover:border-[#ba1a1a]/40 hover:bg-[#ba1a1a]/5 transition-all duration-200 cursor-pointer focus:outline-none"
+          >
+            <Heart
+              size={13}
+              fill={isFavorite ? "#ba1a1a" : "none"}
+              color={isFavorite ? "#ba1a1a" : "currentColor"}
+              className="transition-colors duration-200"
+            />
+          </button>
         </div>
       </div>
     </Link>

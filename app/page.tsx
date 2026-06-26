@@ -4,11 +4,13 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { ringerTeeProduct } from "@/data/dummyData";
-import { ShoppingBag } from "lucide-react";
+import { Heart, ShoppingBag } from "lucide-react";
 
 export default function Home() {
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const getVariantStockCount = (variantId?: string) => {
     if (!variantId) return 0;
@@ -52,7 +54,7 @@ export default function Home() {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="relative w-full h-[870px] min-h-[600px] flex items-end pb-12 md:pb-section-gap">
+      <section className="relative w-full h-[50vh] md:h-[870px] min-h-[380px] md:min-h-[600px] flex items-end pb-8 md:pb-12 lg:pb-16">
         <div className="absolute inset-0 z-0">
           <Image
             src="/assets/home-page-cover-page.jpeg"
@@ -89,7 +91,7 @@ export default function Home() {
       </section>
 
       {/* Explore Collections Bento Grid */}
-      <section id="product-story" className="w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
+      <section id="product-story" className="w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop pt-section-gap pb-0">
         <div className="flex justify-between items-end mb-stack-lg border-b border-outline-variant/20 pb-4">
           <h2 className="font-display-md text-display-md text-primary uppercase">EXPLORE COLLECTIONS</h2>
         </div>
@@ -180,7 +182,7 @@ export default function Home() {
       </section>
 
       {/* Shop All Colors Grid Section */}
-      <section id="shop-colors" className="w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-section-gap border-t border-outline-variant/10">
+      <section id="shop-colors" className="w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop pt-section-gap pb-0 border-t border-outline-variant/10">
         <div className="flex flex-col gap-stack-sm mb-stack-lg text-center md:text-left pb-4 border-b border-outline-variant/20">
           <span className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">
             EXPLORE THE PALETTE
@@ -299,21 +301,21 @@ export default function Home() {
                     <h3 className="font-body-md sm:font-body-lg text-xs sm:text-body-lg text-primary font-bold uppercase mt-1 line-clamp-2">
                       {variant.name}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="font-label-caps text-label-caps text-primary">
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span className="font-label-caps text-label-caps text-primary font-bold">
                         LE 700.00
                       </span>
                       <span className="font-label-caps text-[10px] text-on-surface-variant/40 line-through">
                         LE 875.00
                       </span>
-                      <span className="bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[9px] px-2 py-0.5 rounded-full font-bold tracking-wider">
-                        20% OFF
-                      </span>
                     </div>
+                    <span className="inline-block bg-[#C28a5c]/10 text-[#C28a5c] font-label-caps text-[9px] px-2 py-0.5 rounded-full font-bold tracking-wider mt-0.5">
+                      20% OFF
+                    </span>
                   </div>
 
                   {/* CTA Action (Responsive, Add to Cart or View Product) */}
-                  <div className="mt-4 w-full">
+                  <div className="mt-3 w-full flex items-center gap-2">
                     {info.inStock ? (
                       <button
                         onClick={(e) => {
@@ -321,20 +323,66 @@ export default function Home() {
                           e.stopPropagation();
                           addToCart(ringerTeeProduct, info.variantId);
                         }}
-                        className="w-full py-2.5 sm:py-3 bg-[#0F1B2D] hover:bg-[#1C2D42] text-white font-label-caps text-[9px] sm:text-[10.5px] tracking-widest uppercase rounded-[8px] transition-colors font-bold text-center cursor-pointer focus:outline-none"
+                        className="flex-1 py-2.5 sm:py-3 bg-[#0F1B2D] hover:bg-[#1C2D42] text-white font-label-caps text-[9px] sm:text-[10.5px] tracking-widest uppercase rounded-[8px] transition-colors font-bold text-center cursor-pointer focus:outline-none flex items-center justify-center gap-1.5"
                       >
-                        Add to Cart
+                        <ShoppingBag size={11} />
+                        <span>Add to Cart</span>
                       </button>
                     ) : (
                       <button
-                        onClick={(e) => {
-                          // Link routing handles click naturally
-                        }}
-                        className="w-full py-2.5 sm:py-3 bg-white hover:bg-neutral-50 text-[#0F1B2D] border border-neutral-300 font-label-caps text-[9px] sm:text-[10.5px] tracking-widest uppercase rounded-[8px] transition-all font-bold text-center cursor-pointer focus:outline-none"
+                        className="flex-1 py-2.5 sm:py-3 bg-white hover:bg-neutral-50 text-[#0F1B2D] border border-neutral-300 font-label-caps text-[9px] sm:text-[10.5px] tracking-widest uppercase rounded-[8px] transition-all font-bold text-center cursor-pointer focus:outline-none"
                       >
                         View Product
                       </button>
                     )}
+                    {/* Wishlist Icon Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const colorMap: { [key: string]: string } = {
+                          "black-white": "Black / White",
+                          "creamy-olive": "Creamy / Olive",
+                          "creamy-burgundy": "Creamy / Burgundy",
+                          "olive-white": "Olive / White",
+                          "rose-white": "Rose / White",
+                          "army-white": "Army / White",
+                          "burgundy-white": "Burgundy / White",
+                        };
+                        const colorName = colorMap[variant.slug];
+                        const firstVariantId = ringerTeeProduct.variants.find(
+                          (v) => v.options.Color === colorName && v.available
+                        )?.id || ringerTeeProduct.variants.find((v) => v.options.Color === colorName)?.id || ringerTeeProduct.variants[0]?.id;
+                        toggleWishlist(ringerTeeProduct, firstVariantId, colorName, variant.image);
+                      }}
+                      aria-label="Add to wishlist"
+                      className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-[8px] border border-neutral-200 flex items-center justify-center text-[#0F1B2D] hover:text-[#ba1a1a] hover:border-[#ba1a1a]/40 hover:bg-[#ba1a1a]/5 transition-all duration-200 cursor-pointer focus:outline-none"
+                    >
+                      {(() => {
+                        const colorMap: { [key: string]: string } = {
+                          "black-white": "Black / White",
+                          "creamy-olive": "Creamy / Olive",
+                          "creamy-burgundy": "Creamy / Burgundy",
+                          "olive-white": "Olive / White",
+                          "rose-white": "Rose / White",
+                          "army-white": "Army / White",
+                          "burgundy-white": "Burgundy / White",
+                        };
+                        const colorName = colorMap[variant.slug];
+                        const firstVariantId = ringerTeeProduct.variants.find(
+                          (v) => v.options.Color === colorName && v.available
+                        )?.id || ringerTeeProduct.variants.find((v) => v.options.Color === colorName)?.id;
+                        const fav = isInWishlist(ringerTeeProduct.id, firstVariantId);
+                        return (
+                          <Heart
+                            size={14}
+                            fill={fav ? "#ba1a1a" : "none"}
+                            color={fav ? "#ba1a1a" : "currentColor"}
+                            className="transition-colors duration-200"
+                          />
+                        );
+                      })()}
+                    </button>
                   </div>
                 </div>
               </Link>

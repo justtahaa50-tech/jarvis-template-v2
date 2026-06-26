@@ -94,6 +94,16 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link href="/track-order" className="text-[#F7F6F2]/70 hover:text-[#F7F6F2] transition-colors">
+                  Track Your Order
+                </Link>
+              </li>
+              <li>
+                <Link href="/exchange-refund" className="text-[#F7F6F2]/70 hover:text-[#F7F6F2] transition-colors">
+                  Exchange &amp; Refund
+                </Link>
+              </li>
+              <li>
                 <Link href="/manage-preorders" className="text-[#F7F6F2]/70 hover:text-[#F7F6F2] transition-colors">
                   Manage Pre-orders
                 </Link>
@@ -105,7 +115,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link href="/refund-policy" className="text-[#F7F6F2]/70 hover:text-[#F7F6F2] transition-colors">
-                  Returns & Refunds
+                  Returns &amp; Refunds
                 </Link>
               </li>
               <li>
